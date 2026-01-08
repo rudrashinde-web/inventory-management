@@ -4,32 +4,40 @@
   <meta charset="UTF-8">
   <title>Daru Inventory Management</title>
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 40px; background-color: #f4f7f6; }
-    .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 20px; background-color: #f4f7f6; }
+    .container { max-width: 1150px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     
-    .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-    .stat-card { background: #fff; padding: 20px; border-radius: 8px; border-left: 5px solid #007bff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; }
-    .stat-card h3 { margin: 0; font-size: 0.9rem; color: #666; text-transform: uppercase; }
-    .stat-card p { margin: 10px 0 0; font-size: 1.5rem; font-weight: bold; color: #333; }
+    .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
+    .stat-card { background: #fff; padding: 15px; border-radius: 8px; border-left: 5px solid #007bff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; }
+    .stat-card h3 { margin: 0; font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card p { margin: 10px 0 0; font-size: 1.3rem; font-weight: bold; color: #333; }
     
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
     th { background-color: #007bff; color: white; }
     
-    form { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; }
+    .summary-container { display: flex; gap: 30px; flex-wrap: wrap; margin-bottom: 40px; }
+    .summary-table { width: 350px; margin-top: 20px; border: 2px solid #007bff; border-radius: 4px; }
+
+    form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; background: #ebf3ff; padding: 15px; border-radius: 8px; border: 1px solid #cfe2ff; }
     .input-group { display: flex; flex-direction: column; }
     label { font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #666; }
-    select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; min-width: 120px; }
+    select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; background: white; }
     
-    .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; color: white; }
+    .badge { padding: 3px 7px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; }
     .badge-entry { background-color: #28a745; }
     .badge-exit { background-color: #dc3545; }
 
     button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-    .delete-btn { background-color: #dc3545; border-radius: 4px; padding: 6px 10px; color: white; border: none; cursor: pointer; }
+    .delete-btn { background-color: #dc3545; padding: 4px 8px; font-size: 11px; color: white; border: none; border-radius: 3px; cursor: pointer; }
     
-    #stockWarning { color: #dc3545; font-size: 12px; font-weight: bold; margin-top: 5px; display: block; }
-    .clear-storage { background-color: #6c757d; margin-top: 20px; font-size: 10px; opacity: 0.6; color: white; border: none; padding: 5px; cursor: pointer; }
+    .filter-box { margin-bottom: 15px; padding: 10px; background: #eee; border-radius: 5px; display: flex; align-items: center; gap: 10px; }
+    #stockWarning { color: #dc3545; font-size: 11px; font-weight: bold; margin-top: 2px; }
+    .clear-storage { background-color: #6c757d; margin-top: 40px; font-size: 10px; opacity: 0.5; color: white; border: none; padding: 5px; cursor: pointer; border-radius: 3px; }
+    
+    .revenue-info { font-size: 10px; color: #6f42c1; display: block; margin-top: 2px; font-weight: normal; }
   </style>
 </head>
 <body>
@@ -38,73 +46,66 @@
   <h1>Daru Inventory Dashboard</h1>
 
   <div class="dashboard">
-    <div class="stat-card">
-      <h3>Total Bottles In Stock</h3>
-      <p id="totalQty">0</p>
+    <div class="stat-card" style="border-left-color: #007bff;">
+        <h3>Total In Stock</h3>
+        <p id="totalQty">0</p>
     </div>
     <div class="stat-card" style="border-left-color: #28a745;">
-      <h3>Total Valuation</h3>
-      <p id="totalVal">₹0</p>
+        <h3>Stock Valuation</h3>
+        <p id="totalVal">₹0</p>
     </div>
     <div class="stat-card" style="border-left-color: #ffc107;">
-      <h3>Brands</h3>
-      <p id="uniqueCount">0</p>
+        <h3>Brand Count</h3>
+        <p id="uniqueCount">0</p>
+    </div>
+    <div class="stat-card" style="border-left-color: #dc3545;">
+        <h3 id="monthLabelQty">Stock Out (Qty)</h3>
+        <p id="monthExitQty">0</p>
+    </div>
+    <div class="stat-card" style="border-left-color: #6f42c1;">
+        <h3 id="monthLabelRev">Revenue (+₹50/btl)</h3>
+        <p id="monthRevenue">₹0</p>
     </div>
   </div>
 
   <h2>Add New Transaction</h2>
   <form id="addForm">
-    <div class="input-group">
-      <label>Type</label>
+    <div class="input-group"><label>Type</label>
       <select id="type" required>
-        <option value="ENTRY">ENTRY (In)</option>
-        <option value="EXIT">EXIT (Out)</option>
+          <option value="ENTRY">ENTRY (Stock In)</option>
+          <option value="EXIT">EXIT (Stock Out)</option>
       </select>
     </div>
-
-    <div class="input-group">
-      <label>Item Name</label>
+    <div class="input-group"><label>Brand Name</label>
       <select id="name" required onchange="checkAvailableStock()">
         <option value="">Select Code</option>
-        <option value="IB">IB</option>
+                <option value="IB">IB</option>
         <option value="RS">RS</option>
         <option value="RC">RC</option>
         <option value="MD">MD</option>
         <option value="OC BLUE">OC BLUE</option>
         <option value="GREEN LABEL">GREEN LABEL</option>
         <option value="R.GREEN">R.GREEN</option>
-        <option value="ICONIC W.">ICONIC E.</option>
+        <option value="ICONIC W.">ICONIC W.</option>
         <option value="MD RUM">MD RUM</option>
         <option value="DSP">DSP</option>
         <option value="B7">B7</option>
         <option value="ROMANOV">ROMANOV</option>
-        <option value="MAGIC MOVE.">OC</option>
+        <option value="MAGIC MOVE.">MAGIC MOVE.</option>
         <option value="DR.BANDY">DR.BANDY</option>
-        <option value="GOA FIN">GOA GIN</option>
-        <option value="GRANDMASTER FAV.">GF</option>
+        <option value="GOA GIN">GOA GIN</option>
+        <option value="GRANDMASTER FAV.">GRANDMASTER FAV.</option>
       </select>
       <span id="stockWarning"></span>
     </div>
-
-    <div class="input-group">
-      <label>Quantity</label>
+    <div class="input-group"><label>Quantity</label>
       <select id="quantity" required>
-        <option value="">Select Qty</option>
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="6">6</option>
-        <option value="10">10</option>
-        <option value="12">12</option>
-        <option value="24">24</option>
-        <option value="48">48</option>
-        <option value="96">96</option>
+        <option value="1">1</option><option value="2">2</option><option value="6">6</option>
+        <option value="12">12</option><option value="24">24</option><option value="48">48</option><option value="96">96</option>
       </select>
     </div>
-
-    <div class="input-group">
-      <label>Price (₹)</label>
+    <div class="input-group"><label>Rate (₹)</label>
       <select id="price" required>
-        <option value="">Select Price</option>
         <option value="175">175</option>
         <option value="210">210</option>
         <option value="220">220</option>
@@ -113,29 +114,49 @@
         <option value="260">260</option>
         <option value="270">270</option>
         <option value="300">300</option>
-              </select>
+        <option value="310">310</option>
+
+      </select>
+      <span class="revenue-info">*Exits add ₹50 profit</span>
     </div>
-    
     <button type="submit">Submit Entry</button>
   </form>
 
-  <hr>
+  <div class="section-header">
+    <h2>Daru stock Entry/Exit</h2>
+    <div class="filter-box">
+        <label>History View:</label>
+        <select id="historyFilter" onchange="displayItems()">
+            <option value="all">Full History</option>
+            <option value="month">Current Month Only</option>
+        </select>
+    </div>
+  </div>
 
-  <h2>Daru stock Entry/Exit</h2>
   <table id="itemsTable">
     <thead>
       <tr>
         <th>Date/Time</th>
         <th>Status</th>
-        <th>Brand Name</th>
+        <th>Brand</th>
         <th>Qty</th>
-        <th>Rate</th>
+        <th>Base Rate</th>
         <th>Total Value</th>
         <th>Actions</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
+
+  <div class="summary-container">
+    <div>
+        <h2>Current Stock Balance</h2>
+        <table class="summary-table" id="summaryTable">
+            <thead><tr><th>Brand</th><th>Available Units</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+  </div>
 
   <button class="clear-storage" onclick="clearAllData()">Reset System Memory</button>
 </div>
@@ -164,56 +185,97 @@
         const warningEl = document.getElementById('stockWarning');
         if (name) {
             const bal = getBalance(name);
-            warningEl.innerText = `Stock: ${bal}`;
+            warningEl.innerText = `Available: ${bal}`;
             warningEl.style.color = bal <= 0 ? "#dc3545" : "#28a745";
-        } else {
-            warningEl.innerText = "";
-        }
+        } else { warningEl.innerText = ""; }
     }
 
     function updateDashboard() {
-        let currentStock = 0;
-        let totalValue = 0;
+        let currentStock = 0; 
+        let currentValuation = 0; 
         let uniqueNames = new Set();
+        let monthlyExitQty = 0;
+        let monthlyRevenue = 0;
+
+        const now = new Date();
+        const curMonth = now.getMonth();
+        const curYear = now.getFullYear();
 
         inventory.forEach(item => {
-            const q = parseInt(item.quantity) || 0;
-            const p = parseFloat(item.price) || 0;
-            if (item.type === 'EXIT') {
-                currentStock -= q;
-                totalValue -= (q * p);
-            } else {
-                currentStock += q;
-                totalValue += (q * p);
+            const q = parseInt(item.quantity); 
+            const p = parseFloat(item.price);
+            const itemDate = new Date(item.timestamp);
+            const isThisMonth = (itemDate.getMonth() === curMonth && itemDate.getFullYear() === curYear);
+            
+            if (item.type === 'EXIT') { 
+                currentStock -= q; 
+                currentValuation -= (q * p); 
+                if(isThisMonth) {
+                    monthlyExitQty += q;
+                    // Revenue Logic: (Price + 50) * Quantity
+                    monthlyRevenue += (q * (p + 50));
+                }
+            } 
+            else { 
+                currentStock += q; 
+                currentValuation += (q * p); 
             }
             uniqueNames.add(item.name);
         });
 
-        document.getElementById('totalQty').innerText = currentStock.toLocaleString('en-IN');
-        document.getElementById('totalVal').innerText = '₹' + totalValue.toLocaleString('en-IN');
+        document.getElementById('totalQty').innerText = currentStock;
+        document.getElementById('totalVal').innerText = '₹' + currentValuation.toLocaleString('en-IN');
         document.getElementById('uniqueCount').innerText = uniqueNames.size;
+        document.getElementById('monthExitQty').innerText = monthlyExitQty;
+        document.getElementById('monthRevenue').innerText = '₹' + monthlyRevenue.toLocaleString('en-IN');
+        
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const labelSuffix = `(${months[curMonth]})`;
+        document.getElementById('monthLabelQty').innerText = `Stock Out ${labelSuffix}`;
+        document.getElementById('monthLabelRev').innerText = `Revenue ${labelSuffix}`;
     }
 
     function displayItems() {
+      const filter = document.getElementById('historyFilter').value;
       const tableBody = document.querySelector('#itemsTable tbody');
+      const summaryBody = document.querySelector('#summaryTable tbody');
       tableBody.innerHTML = '';
       
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
       inventory.forEach((item, index) => {
+        const itemDate = new Date(item.timestamp);
+        const isThisMonth = itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear;
+
+        if (filter === 'month' && !isThisMonth) return;
+
         const row = document.createElement('tr');
         const q = parseInt(item.quantity);
         const p = parseFloat(item.price);
         const isExit = item.type === 'EXIT';
+        
+        // Show total value based on type (+50 for exits)
+        const displayValue = isExit ? (q * (p + 50)) : (q * p);
 
         row.innerHTML = `
-          <td style="font-size: 0.8rem; color: #666;">${item.date}</td>
+          <td>${item.date}</td>
           <td><span class="badge ${isExit ? 'badge-exit' : 'badge-entry'}">${item.type}</span></td>
           <td style="font-weight: bold;">${item.name}</td>
           <td style="color: ${isExit ? 'red' : 'green'}; font-weight: bold;">${isExit ? '-' : '+'}${q}</td>
-          <td>₹${p}</td>
-          <td>₹${(isExit ? -(q*p) : (q*p)).toLocaleString('en-IN')}</td>
+          <td>₹${p}${isExit ? ' <small>+50</small>' : ''}</td>
+          <td>₹${displayValue.toLocaleString('en-IN')}</td>
           <td><button class="delete-btn" onclick="deleteItem(${index})">Delete</button></td>
         `;
-        tableBody.appendChild(row);
+        tableBody.prepend(row);
+      });
+
+      const brands = ["IB", "RS", "RC", "MD", "OC BLUE", "GREEN LABEL", "R.GREEN", "ICONIC W.", "MD RUM", "DSP", "B7", "ROMANOV", "MAGIC MOVE.", "DR.BANDY", "GOA GIN", "GRANDMASTER FAV."];
+      summaryBody.innerHTML = "";
+      brands.forEach(brand => {
+          const bal = getBalance(brand);
+          summaryBody.innerHTML += `<tr><td>${brand}</td><td><strong>${bal}</strong></td></tr>`;
       });
       
       localStorage.setItem('myInventoryData', JSON.stringify(inventory));
@@ -223,41 +285,41 @@
 
     document.getElementById('addForm').onsubmit = function(e) {
       e.preventDefault();
-      
       const type = document.getElementById('type').value;
       const name = document.getElementById('name').value;
       const qty = parseInt(document.getElementById('quantity').value);
-      const price = document.getElementById('price').value;
+      const price = parseFloat(document.getElementById('price').value);
       
-      if (type === 'EXIT') {
-          const currentBalance = getBalance(name);
-          if (qty > currentBalance) {
-              alert(`Nahi hai! You only have ${currentBalance} units of ${name} in stock.`);
-              return;
-          }
+      if (type === 'EXIT' && qty > getBalance(name)) {
+          alert(`Insufficient Stock! Only ${getBalance(name)} units left.`);
+          return;
       }
 
       const now = new Date();
       const dateString = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-      inventory.push({ date: dateString, type, name, quantity: qty, price });
+      inventory.push({ 
+          date: dateString, 
+          timestamp: now.getTime(), 
+          type, name, quantity: qty, price 
+      });
       displayItems();
       this.reset();
       document.getElementById('stockWarning').innerText = "";
     };
 
     window.deleteItem = function(index) {
-      if(confirm("Remove this record?")) {
-        inventory.splice(index, 1);
-        displayItems();
+      if(confirm("Permanently delete this record?")) { 
+          inventory.splice(index, 1); 
+          displayItems(); 
       }
     };
 
     function clearAllData() {
-        if(confirm("Full Reset? Everything will be deleted.")) {
-            localStorage.clear();
-            inventory = [];
-            displayItems();
+        if(confirm("DANGER: This will delete ALL history and stock records. Continue?")) { 
+            localStorage.clear(); 
+            inventory = []; 
+            displayItems(); 
         }
     }
 
