@@ -95,13 +95,15 @@
         <option value="DR.BANDY">DR.BANDY</option>
         <option value="GOA GIN">GOA GIN</option>
         <option value="GRANDMASTER FAV.">GRANDMASTER FAV.</option>
+        <option value="Signature">Signature</option>
+        <option value="Blender">Blender</option>
       </select>
       <span id="stockWarning"></span>
     </div>
     <div class="input-group"><label>Quantity</label>
       <select id="quantity" required>
         <option value="1">1</option><option value="2">2</option><option value="6">6</option>
-        <option value="12">12</option><option value="24">24</option><option value="48">48</option><option value="96">96</option>
+        <option value="12">12</option><option value="24">24</option><option value="48">48</option><option value="96">96(2)</option><option value="144">144(3)</option><option value="192">192(4)</option><option value="240">240(5)</option>
       </select>
     </div>
     <div class="input-group"><label>Rate (₹)</label>
@@ -115,6 +117,7 @@
         <option value="270">270</option>
         <option value="300">300</option>
         <option value="310">310</option>
+        <option value="380">380</option>
 
       </select>
       <span class="revenue-info">*Exits add ₹50 profit</span>
@@ -271,7 +274,7 @@
         tableBody.prepend(row);
       });
 
-      const brands = ["IB", "RS", "RC", "MD", "OC BLUE", "GREEN LABEL", "R.GREEN", "ICONIC W.", "MD RUM", "DSP", "B7", "ROMANOV", "MAGIC MOVE.", "DR.BANDY", "GOA GIN", "GRANDMASTER FAV."];
+      const brands = ["IB", "RS", "RC", "MD", "OC BLUE", "GREEN LABEL", "R.GREEN", "ICONIC W.", "MD RUM", "DSP", "B7", "ROMANOV", "MAGIC MOVE.", "DR.BANDY", "Blender", "Signature", "GOA GIN", "GRANDMASTER FAV."];
       summaryBody.innerHTML = "";
       brands.forEach(brand => {
           const bal = getBalance(brand);
@@ -327,3 +330,4 @@
 </script>
 </body>
 </html>
+
