@@ -63,7 +63,7 @@
         <p id="monthExitQty">0</p>
     </div>
     <div class="stat-card" style="border-left-color: #6f42c1;">
-        <h3 id="monthLabelRev">Revenue (+₹50/btl)</h3>
+        <h3 id="monthLabelRev">Est. Revenue (Profit)</h3>
         <p id="monthRevenue">₹0</p>
     </div>
   </div>
@@ -79,7 +79,7 @@
     <div class="input-group"><label>Brand Name</label>
       <select id="name" required onchange="checkAvailableStock()">
         <option value="">Select Code</option>
-                <option value="IB">IB</option>
+        <option value="IB">IB</option>
         <option value="RS">RS</option>
         <option value="RC">RC</option>
         <option value="MD">MD</option>
@@ -97,16 +97,18 @@
         <option value="GRANDMASTER FAV.">GRANDMASTER FAV.</option>
         <option value="Signature">Signature</option>
         <option value="Blender">Blender</option>
+        <option value="MOTHA">MOTHA</option>
+        <option value="CHOTHA">CHOTHA</option>
       </select>
       <span id="stockWarning"></span>
     </div>
     <div class="input-group"><label>Quantity</label>
       <select id="quantity" required>
-        <option value="1">1</option><option value="2">2</option><option value="6">6</option>
-        <option value="12">12</option><option value="24">24</option><option value="48">48</option><option value="96">96(2)</option><option value="144">144(3)</option><option value="192">192(4)</option><option value="240">240(5)</option>
+        <option value="1">1</option><option value="2">2</option><option value="5">5<option value="6">6</option><option value="10">10
+        <option value="12">12</option><option value="24">24</option><option value="48">48(1)box</option><option value="96">96(2)box</option><option value="144">144(3)box</option><option value="192">192(4)box</option><option value="240">240(5)box</option>
       </select>
     </div>
-    <div class="input-group"><label>Rate (₹)</label>
+    <div class="input-group"><label>Buying Rate (₹)</label>
       <select id="price" required>
         <option value="175">175</option>
         <option value="210">210</option>
@@ -118,9 +120,10 @@
         <option value="300">300</option>
         <option value="310">310</option>
         <option value="380">380</option>
-
+        <option value="3600">3600</option>
+        <option value="3900">3900</option>
       </select>
-      <span class="revenue-info">*Exits add ₹50 profit</span>
+      <span class="revenue-info">*Calculates profit automatically</span>
     </div>
     <button type="submit">Submit Entry</button>
   </form>
@@ -143,8 +146,8 @@
         <th>Status</th>
         <th>Brand</th>
         <th>Qty</th>
-        <th>Base Rate</th>
-        <th>Total Value</th>
+        <th>Buying Rate</th>
+        <th>Total Value </th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -171,6 +174,13 @@
         const savedData = localStorage.getItem('myInventoryData');
         if (savedData) inventory = JSON.parse(savedData);
     } catch (e) { inventory = []; }
+
+    // Helper to determine profit margin per bottle
+    function getProfitMargin(itemName) {
+        if (itemName === "MOTHA") return 1200;  // 4800 (Sell) - 3600 (Buy)
+        if (itemName === "CHOTHA") return 1100; // 5000 (Sell) - 3900 (Buy)
+        return 50; // Standard profit
+    }
 
     function getBalance(itemName) {
         let balance = 0;
@@ -215,8 +225,9 @@
                 currentValuation -= (q * p); 
                 if(isThisMonth) {
                     monthlyExitQty += q;
-                    // Revenue Logic: (Price + 50) * Quantity
-                    monthlyRevenue += (q * (p + 50));
+                    // Revenue Logic: (Price + specific profit) * Quantity
+                    const profit = getProfitMargin(item.name);
+                    monthlyRevenue += (q * (p + profit));
                 }
             } 
             else { 
@@ -259,22 +270,29 @@
         const p = parseFloat(item.price);
         const isExit = item.type === 'EXIT';
         
-        // Show total value based on type (+50 for exits)
-        const displayValue = isExit ? (q * (p + 50)) : (q * p);
+        // Calculate dynamic profit
+        const profit = getProfitMargin(item.name);
+        const displayValue = isExit ? (q * (p + profit)) : (q * p);
 
         row.innerHTML = `
           <td>${item.date}</td>
           <td><span class="badge ${isExit ? 'badge-exit' : 'badge-entry'}">${item.type}</span></td>
           <td style="font-weight: bold;">${item.name}</td>
           <td style="color: ${isExit ? 'red' : 'green'}; font-weight: bold;">${isExit ? '-' : '+'}${q}</td>
-          <td>₹${p}${isExit ? ' <small>+50</small>' : ''}</td>
+          <td>₹${p}${isExit ? ` <small>+${profit}</small>` : ''}</td>
           <td>₹${displayValue.toLocaleString('en-IN')}</td>
           <td><button class="delete-btn" onclick="deleteItem(${index})">Delete</button></td>
         `;
         tableBody.prepend(row);
       });
 
-      const brands = ["IB", "RS", "RC", "MD", "OC BLUE", "GREEN LABEL", "R.GREEN", "ICONIC W.", "MD RUM", "DSP", "B7", "ROMANOV", "MAGIC MOVE.", "DR.BANDY", "Blender", "Signature", "GOA GIN", "GRANDMASTER FAV."];
+      // Updated brands list
+      const brands = [
+        "IB", "RS", "RC", "MD", "OC BLUE", "GREEN LABEL", "R.GREEN", "ICONIC W.", 
+        "MD RUM", "DSP", "B7", "ROMANOV", "MAGIC MOVE.", "DR.BANDY", "GOA GIN", 
+        "GRANDMASTER FAV.", "Blender", "Signature", "MOTHA", "CHOTHA"
+      ];
+      
       summaryBody.innerHTML = "";
       brands.forEach(brand => {
           const bal = getBalance(brand);
@@ -330,5 +348,3 @@
 </script>
 </body>
 </html>
-
-
