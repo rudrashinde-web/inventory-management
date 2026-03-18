@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Daru Inventory Management</title>
+  <title>Daru Inventory & Billing System</title>
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; margin: 20px; background-color: #f4f7f6; }
-    .container { max-width: 1150px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .container { max-width: 1250px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     
     .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
     .stat-card { background: #fff; padding: 15px; border-radius: 8px; border-left: 5px solid #007bff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; }
@@ -18,13 +18,10 @@
     th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
     th { background-color: #007bff; color: white; }
     
-    .summary-container { display: flex; gap: 30px; flex-wrap: wrap; margin-bottom: 40px; }
-    .summary-table { width: 350px; margin-top: 20px; border: 2px solid #007bff; border-radius: 4px; }
-
     form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; background: #ebf3ff; padding: 15px; border-radius: 8px; border: 1px solid #cfe2ff; }
     .input-group { display: flex; flex-direction: column; }
-    label { font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #666; }
-    select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; background: white; }
+    label { font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #666; }
+    select, input { padding: 8px; border-radius: 4px; border: 1px solid #ccc; background: white; }
     
     .badge { padding: 3px 7px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; }
     .badge-entry { background-color: #28a745; }
@@ -32,12 +29,19 @@
 
     button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
     .delete-btn { background-color: #dc3545; padding: 4px 8px; font-size: 11px; color: white; border: none; border-radius: 3px; cursor: pointer; }
+    .print-btn { background-color: #6f42c1; padding: 4px 8px; font-size: 11px; color: white; border: none; border-radius: 3px; cursor: pointer; margin-left: 5px; }
     
-    .filter-box { margin-bottom: 15px; padding: 10px; background: #eee; border-radius: 5px; display: flex; align-items: center; gap: 10px; }
     #stockWarning { color: #dc3545; font-size: 11px; font-weight: bold; margin-top: 2px; }
     .clear-storage { background-color: #6c757d; margin-top: 40px; font-size: 10px; opacity: 0.5; color: white; border: none; padding: 5px; cursor: pointer; border-radius: 3px; }
+
+    @media print {
+      body * { visibility: hidden; }
+      #printSection, #printSection * { visibility: visible; }
+      #printSection { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+    }
     
-    .revenue-info { font-size: 10px; color: #6f42c1; display: block; margin-top: 2px; font-weight: normal; }
+    #printSection { display: none; padding: 40px; font-family: 'Courier New', Courier, monospace; max-width: 500px; margin: auto; }
+    .bill-header { text-align: center; border-bottom: 2px dashed #333; margin-bottom: 15px; padding-bottom: 15px; }
   </style>
 </head>
 <body>
@@ -46,304 +50,251 @@
   <h1>Daru Inventory Dashboard</h1>
 
   <div class="dashboard">
-    <div class="stat-card" style="border-left-color: #007bff;">
-        <h3>Total In Stock</h3>
-        <p id="totalQty">0</p>
-    </div>
-    <div class="stat-card" style="border-left-color: #28a745;">
-        <h3>Stock Valuation</h3>
-        <p id="totalVal">₹0</p>
-    </div>
-    <div class="stat-card" style="border-left-color: #ffc107;">
-        <h3>Brand Count</h3>
-        <p id="uniqueCount">0</p>
-    </div>
-    <div class="stat-card" style="border-left-color: #dc3545;">
-        <h3 id="monthLabelQty">Stock Out (Qty)</h3>
-        <p id="monthExitQty">0</p>
-    </div>
-    <div class="stat-card" style="border-left-color: #6f42c1;">
-        <h3 id="monthLabelRev">Est. Revenue (Profit)</h3>
-        <p id="monthRevenue">₹0</p>
-    </div>
+    <div class="stat-card" style="border-left-color: #007bff;"><h3>Total In Stock</h3><p id="totalQty">0</p></div>
+    <div class="stat-card" style="border-left-color: #28a745;"><h3>Stock Valuation</h3><p id="totalVal">₹0</p></div>
+    <div class="stat-card" style="border-left-color: #ffc107;"><h3>Available Brands</h3><p id="uniqueCount">0</p></div>
+    <div class="stat-card" style="border-left-color: #dc3545;"><h3 id="dailyLabelQty">Today's Sales (Qty)</h3><p id="dailyExitQty">0</p></div>
+    <div class="stat-card" style="border-left-color: #6f42c1;"><h3 id="dailyLabelRev">Today's Revenue</h3><p id="dailyRevenue">₹0</p></div>
   </div>
 
-  <h2>Add New Transaction</h2>
+  <h2>Add Transaction</h2>
   <form id="addForm">
-    <div class="input-group"><label>Type</label>
+    <div class="input-group">
+      <label>Type</label>
       <select id="type" required>
           <option value="ENTRY">ENTRY (Stock In)</option>
           <option value="EXIT">EXIT (Stock Out)</option>
       </select>
     </div>
-    <div class="input-group"><label>Brand Name</label>
+    
+    <div class="input-group">
+      <label>Brand Name</label>
       <select id="name" required onchange="checkAvailableStock()">
-        <option value="">Select Code</option>
-        <option value="IB">IB</option>
-        <option value="RS">RS</option>
-        <option value="RC">RC</option>
-        <option value="MD">MD</option>
-        <option value="OC BLUE">OC BLUE</option>
-        <option value="GREEN LABEL">GREEN LABEL</option>
-        <option value="R.GREEN">R.GREEN</option>
-        <option value="ICONIC W.">ICONIC W.</option>
-        <option value="MD RUM">MD RUM</option>
-        <option value="DSP">DSP</option>
-        <option value="B7">B7</option>
-        <option value="ROMANOV">ROMANOV</option>
-        <option value="MAGIC MOVE.">MAGIC MOVE.</option>
-        <option value="DR.BANDY">DR.BANDY</option>
-        <option value="GOA GIN">GOA GIN</option>
-        <option value="GRANDMASTER FAV.">GRANDMASTER FAV.</option>
-        <option value="Signature">Signature</option>
-        <option value="Blender">Blender</option>
-        <option value="MOTHA">MOTHA</option>
-        <option value="CHOTHA">CHOTHA</option>
+        <option value="">Select Brand</option>
+        <option value="IB">IB</option><option value="RS">RS</option><option value="RC">RC</option>
+        <option value="MD">MD</option><option value="OC BLUE">OC BLUE</option>
+        <option value="GREEN LABEL">GREEN LABEL</option><option value="R.GREEN">R.GREEN</option>
+        <option value="ICONIC W.">ICONIC W.</option><option value="MD RUM">MD RUM</option>
+        <option value="DSP">DSP</option><option value="B7">B7</option><option value="ROMANOV">ROMANOV</option>
+        <option value="MAGIC MOVE.">MAGIC MOVE.</option><option value="DR.BANDY">DR.BANDY</option>
+        <option value="GOA GIN">GOA GIN</option><option value="GRANDMASTER FAV.">GRANDMASTER FAV.</option>
+        <option value="Signature">Signature</option><option value="Blender">Blender</option>
+        <option value="MOTHA">MOTHA</option><option value="CHOTHA">CHOTHA</option>
       </select>
       <span id="stockWarning"></span>
     </div>
-    <div class="input-group"><label>Quantity</label>
-      <select id="quantity" required>
-        <option value="1">1</option><option value="2">2</option><option value="5">5<option value="6">6</option><option value="10">10
-        <option value="12">12</option><option value="24">24</option><option value="48">48(1)box</option><option value="96">96(2)box</option><option value="144">144(3)box</option><option value="192">192(4)box</option><option value="240">240(5)box</option>
-      </select>
+
+    <div class="input-group"><label>CD Qty (₹20)</label><input type="number" id="coldDrinkQtyInput" value="0" min="0" style="width: 65px;"></div>
+    <div class="input-group"><label>Chakana Qty (₹10)</label><input type="number" id="chakanaQtyInput" value="0" min="0" style="width: 65px;"></div>
+
+    <div class="input-group">
+      <label>Liquor Qty (e.g. 2+4)</label>
+      <input list="qtyOptions" id="quantity" placeholder="Type/Select" required style="width: 110px;">
+      <datalist id="qtyOptions">
+        <option value="1">1</option><option value="6">6</option><option value="12">12</option>
+        <option value="24">24</option><option value="48">48 (1 Box)</option><option value="96">96 (2 Box)</option>
+      </datalist>
     </div>
-    <div class="input-group"><label>Buying Rate (₹)</label>
+
+    <div class="input-group">
+      <label>Buying Rate (₹)</label>
       <select id="price" required>
-        <option value="175">175</option>
-        <option value="210">210</option>
-        <option value="220">220</option>
-        <option value="230">230</option>
-        <option value="250">250</option>
-        <option value="260">260</option>
-        <option value="270">270</option>
-        <option value="300">300</option>
-        <option value="310">310</option>
-        <option value="380">380</option>
-        <option value="3500">3500</option>
-        <option value="3700">3700</option>
+        <option value="175">175</option><option value="210">210</option><option value="220">220</option>
+        <option value="230">230</option><option value="250">250</option><option value="260">260</option>
+        <option value="270">270</option><option value="300">300</option><option value="310">310</option>
+        <option value="380">380</option><option value="3500">3500</option><option value="3700">3700</option>
       </select>
-      <span class="revenue-info">*Calculates profit automatically</span>
     </div>
     <button type="submit">Submit Entry</button>
   </form>
 
   <div class="section-header">
-    <h2>Daru stock Entry/Exit</h2>
-    <div class="filter-box">
-        <label>History View:</label>
-        <select id="historyFilter" onchange="displayItems()">
-            <option value="all">Full History</option>
-            <option value="month">Current Month Only</option>
-        </select>
-    </div>
+    <h2>History</h2>
+    <select id="historyFilter" onchange="displayItems()"><option value="all">Full History</option><option value="month">This Month</option></select>
   </div>
 
   <table id="itemsTable">
-    <thead>
-      <tr>
-        <th>Date/Time</th>
-        <th>Status</th>
-        <th>Brand</th>
-        <th>Qty</th>
-        <th>Buying Rate</th>
-        <th>Total Value </th>
-        <th>Actions</th>
-      </tr>
-    </thead>
+    <thead><tr><th>Date/Time</th><th>Status</th><th>Brand</th><th>Qty</th><th>CD</th><th>CHK</th><th>Total</th><th>Actions</th></tr></thead>
     <tbody></tbody>
   </table>
 
-  <div class="summary-container">
-    <div>
-        <h2>Current Stock Balance</h2>
-        <table class="summary-table" id="summaryTable">
-            <thead><tr><th>Brand</th><th>Available Units</th></tr></thead>
-            <tbody></tbody>
-        </table>
-    </div>
+  <div style="margin-top:30px;">
+    <h2>Stock Balance</h2>
+    <table id="summaryTable" style="width: 300px; border: 2px solid #007bff;">
+        <thead><tr><th>Brand</th><th>Stock</th></tr></thead><tbody></tbody>
+    </table>
   </div>
+  <button class="clear-storage" onclick="clearAllData()">Reset Memory</button>
+</div>
 
-  <button class="clear-storage" onclick="clearAllData()">Reset System Memory</button>
+<div id="printSection">
+    <div class="bill-header">
+        <h1 style="margin: 0; font-size: 24px;">INVOICE</h1>
+        <p style="margin: 5px 0; font-weight: bold;">DARU INVENTORY SYSTEM</p>
+        <p id="billDate" style="font-size: 11px;"></p>
+    </div>
+    <table style="width:100%; border-collapse: collapse; margin-top:15px;">
+        <thead>
+            <tr style="border-bottom: 2px solid #000; border-top: 2px solid #000;">
+                <th style="padding: 10px 0; text-align: left;">Description</th>
+                <th style="text-align: center;">Qty</th>
+                <th style="text-align: right;">Amount</th>
+            </tr>
+        </thead>
+        <tbody id="billBody"></tbody>
+    </table>
+    <div style="text-align: center; margin-top: 30px; border-top: 2px dashed #333; padding-top: 20px;">
+        <p style="margin: 0; font-size: 12px; font-weight: bold;">GRAND TOTAL</p>
+        <h1 style="margin: 5px 0; font-size: 32px;" id="billTotal"></h1>
+    </div>
 </div>
 
 <script>
-    let inventory = [];
-    
-    try {
-        const savedData = localStorage.getItem('myInventoryData');
-        if (savedData) inventory = JSON.parse(savedData);
-    } catch (e) { inventory = []; }
+    let inventory = JSON.parse(localStorage.getItem('myInventoryData')) || [];
+    const CD_PRICE = 20;
+    const CHK_PRICE = 10;
 
-    // Helper to determine profit margin per bottle
+    const ALL_BRANDS = ["IB", "RS", "RC", "MD", "OC BLUE", "GREEN LABEL", "R.GREEN", "ICONIC W.", "MD RUM", "DSP", "B7", "ROMANOV", "MAGIC MOVE.", "DR.BANDY", "GOA GIN", "GRANDMASTER FAV.", "Blender", "Signature", "MOTHA", "CHOTHA"];
+
     function getProfitMargin(itemName) {
-        if (itemName === "MOTHA") return 1200;  // 4800 (Sell) - 3600 (Buy)
-        if (itemName === "CHOTHA") return 1100; // 5000 (Sell) - 3900 (Buy)
-        return 50; // Standard profit
+        if (itemName === "MOTHA") return 1200;
+        if (itemName === "CHOTHA") return 1100;
+        return 50; 
     }
 
     function getBalance(itemName) {
-        let balance = 0;
-        inventory.forEach(item => {
-            if (item.name === itemName) {
-                const q = parseInt(item.quantity) || 0;
-                balance += (item.type === 'EXIT' ? -q : q);
-            }
-        });
-        return balance;
+        let bal = 0;
+        inventory.forEach(i => { if(i.name === itemName) bal += (i.type === 'EXIT' ? -i.quantity : i.quantity); });
+        return bal;
     }
 
     function checkAvailableStock() {
         const name = document.getElementById('name').value;
-        const warningEl = document.getElementById('stockWarning');
+        const warn = document.getElementById('stockWarning');
         if (name) {
-            const bal = getBalance(name);
-            warningEl.innerText = `Available: ${bal}`;
-            warningEl.style.color = bal <= 0 ? "#dc3545" : "#28a745";
-        } else { warningEl.innerText = ""; }
+            const b = getBalance(name);
+            warn.innerText = `Stock: ${b}`;
+            warn.style.color = b <= 0 ? "red" : "green";
+        } else warn.innerText = "";
     }
 
+    function printBill(name, liquorQty, price, cdQty, chkQty) {
+        const profit = getProfitMargin(name);
+        const liquorTotal = liquorQty * (price + profit);
+        const cdTotal = cdQty * CD_PRICE;
+        const chkTotal = chkQty * CHK_PRICE;
+        const grandTotal = liquorTotal + cdTotal + chkTotal;
+        document.getElementById('billDate').innerText = "Date: " + new Date().toLocaleString();
+        document.getElementById('billTotal').innerText = '₹' + grandTotal.toLocaleString('en-IN');
+        let rowsHtml = `<tr><td style="padding:8px 0;">${name}</td><td style="text-align: center;">${liquorQty}</td><td style="text-align: right;">₹${liquorTotal.toLocaleString('en-IN')}</td></tr>`;
+        if (cdQty > 0) rowsHtml += `<tr><td style="padding:8px 0; font-style: italic;">Cold Drink (₹${CD_PRICE})</td><td style="text-align: center;">${cdQty}</td><td style="text-align: right;">₹${cdTotal.toLocaleString('en-IN')}</td></tr>`;
+        if (chkQty > 0) rowsHtml += `<tr><td style="padding:8px 0; font-style: italic;">Chakana (₹${CHK_PRICE})</td><td style="text-align: center;">${chkQty}</td><td style="text-align: right;">₹${chkTotal.toLocaleString('en-IN')}</td></tr>`;
+        document.getElementById('billBody').innerHTML = rowsHtml;
+        window.print();
+    }
+
+    // UPDATED DASHBOARD LOGIC (FIXED BRAND COUNT)
     function updateDashboard() {
-        let currentStock = 0; 
-        let currentValuation = 0; 
-        let uniqueNames = new Set();
-        let monthlyExitQty = 0;
-        let monthlyRevenue = 0;
-
+        let stock = 0, valuation = 0, dailyQty = 0, dailyRev = 0;
         const now = new Date();
-        const curMonth = now.getMonth();
-        const curYear = now.getFullYear();
+        const todayStr = now.toDateString();
 
+        // Calculate Totals and Daily Stats
         inventory.forEach(item => {
-            const q = parseInt(item.quantity); 
-            const p = parseFloat(item.price);
             const itemDate = new Date(item.timestamp);
-            const isThisMonth = (itemDate.getMonth() === curMonth && itemDate.getFullYear() === curYear);
-            
-            if (item.type === 'EXIT') { 
-                currentStock -= q; 
-                currentValuation -= (q * p); 
-                if(isThisMonth) {
-                    monthlyExitQty += q;
-                    // Revenue Logic: (Price + specific profit) * Quantity
-                    const profit = getProfitMargin(item.name);
-                    monthlyRevenue += (q * (p + profit));
+            const isToday = itemDate.toDateString() === todayStr;
+
+            if (item.type === 'EXIT') {
+                stock -= item.quantity;
+                valuation -= (item.quantity * item.price);
+                if(isToday) { 
+                    dailyQty += item.quantity; 
+                    dailyRev += (item.quantity * (item.price + getProfitMargin(item.name))) + ((item.cdQty || 0) * CD_PRICE) + ((item.chkQty || 0) * CHK_PRICE); 
                 }
-            } 
-            else { 
-                currentStock += q; 
-                currentValuation += (q * p); 
+            } else {
+                stock += item.quantity;
+                valuation += (item.quantity * item.price);
             }
-            uniqueNames.add(item.name);
         });
 
-        document.getElementById('totalQty').innerText = currentStock;
-        document.getElementById('totalVal').innerText = '₹' + currentValuation.toLocaleString('en-IN');
-        document.getElementById('uniqueCount').innerText = uniqueNames.size;
-        document.getElementById('monthExitQty').innerText = monthlyExitQty;
-        document.getElementById('monthRevenue').innerText = '₹' + monthlyRevenue.toLocaleString('en-IN');
-        
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const labelSuffix = `(${months[curMonth]})`;
-        document.getElementById('monthLabelQty').innerText = `Stock Out ${labelSuffix}`;
-        document.getElementById('monthLabelRev').innerText = `Revenue ${labelSuffix}`;
+        // FIXED BRAND COUNT: Counts only brands with balance > 0
+        let brandsAvailableCount = 0;
+        ALL_BRANDS.forEach(brand => {
+            if (getBalance(brand) > 0) {
+                brandsAvailableCount++;
+            }
+        });
+
+        document.getElementById('totalQty').innerText = stock;
+        document.getElementById('totalVal').innerText = '₹' + valuation.toLocaleString('en-IN');
+        document.getElementById('dailyExitQty').innerText = dailyQty;
+        document.getElementById('dailyRevenue').innerText = '₹' + dailyRev.toLocaleString('en-IN');
+        document.getElementById('uniqueCount').innerText = brandsAvailableCount;
     }
 
     function displayItems() {
-      const filter = document.getElementById('historyFilter').value;
-      const tableBody = document.querySelector('#itemsTable tbody');
-      const summaryBody = document.querySelector('#summaryTable tbody');
-      tableBody.innerHTML = '';
-      
-      const now = new Date();
-      const currentMonth = now.getMonth();
-      const currentYear = now.getFullYear();
+        const filter = document.getElementById('historyFilter').value;
+        const body = document.querySelector('#itemsTable tbody');
+        body.innerHTML = '';
+        const now = new Date();
 
-      inventory.forEach((item, index) => {
-        const itemDate = new Date(item.timestamp);
-        const isThisMonth = itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear;
+        inventory.forEach((item, index) => {
+            const itemDate = new Date(item.timestamp);
+            if (filter === 'month' && (itemDate.getMonth() !== now.getMonth() || itemDate.getFullYear() !== now.getFullYear())) return;
 
-        if (filter === 'month' && !isThisMonth) return;
+            const isExit = item.type === 'EXIT';
+            const cdQ = item.cdQty || 0;
+            const chkQ = item.chkQty || 0;
+            const total = isExit ? ((item.quantity * (item.price + getProfitMargin(item.name))) + (cdQ * CD_PRICE) + (chkQ * CHK_PRICE)) : (item.quantity * item.price);
+            
+            body.insertAdjacentHTML('afterbegin', `<tr>
+                <td>${item.date}</td>
+                <td><span class="badge ${isExit ? 'badge-exit' : 'badge-entry'}">${item.type}</span></td>
+                <td><b>${item.name}</b></td>
+                <td style="color:${isExit?'red':'green'}"><b>${isExit?'-':'+'}${item.quantity}</b></td>
+                <td style="text-align:center;">${cdQ > 0 ? cdQ : '-'}</td>
+                <td style="text-align:center;">${chkQ > 0 ? chkQ : '-'}</td>
+                <td>₹${total.toLocaleString('en-IN')}</td>
+                <td>
+                    <button class="delete-btn" onclick="deleteItem(${index})">Delete</button>
+                    ${isExit ? `<button class="print-btn" onclick="printBill('${item.name}', ${item.quantity}, ${item.price}, ${cdQ}, ${chkQ})">Bill</button>` : ''}
+                </td>
+            </tr>`);
+        });
 
-        const row = document.createElement('tr');
-        const q = parseInt(item.quantity);
-        const p = parseFloat(item.price);
-        const isExit = item.type === 'EXIT';
-        
-        // Calculate dynamic profit
-        const profit = getProfitMargin(item.name);
-        const displayValue = isExit ? (q * (p + profit)) : (q * p);
-
-        row.innerHTML = `
-          <td>${item.date}</td>
-          <td><span class="badge ${isExit ? 'badge-exit' : 'badge-entry'}">${item.type}</span></td>
-          <td style="font-weight: bold;">${item.name}</td>
-          <td style="color: ${isExit ? 'red' : 'green'}; font-weight: bold;">${isExit ? '-' : '+'}${q}</td>
-          <td>₹${p}${isExit ? ` <small>+${profit}</small>` : ''}</td>
-          <td>₹${displayValue.toLocaleString('en-IN')}</td>
-          <td><button class="delete-btn" onclick="deleteItem(${index})">Delete</button></td>
-        `;
-        tableBody.prepend(row);
-      });
-
-      // Updated brands list
-      const brands = [
-        "IB", "RS", "RC", "MD", "OC BLUE", "GREEN LABEL", "R.GREEN", "ICONIC W.", 
-        "MD RUM", "DSP", "B7", "ROMANOV", "MAGIC MOVE.", "DR.BANDY", "GOA GIN", 
-        "GRANDMASTER FAV.", "Blender", "Signature", "MOTHA", "CHOTHA"
-      ];
-      
-      summaryBody.innerHTML = "";
-      brands.forEach(brand => {
-          const bal = getBalance(brand);
-          summaryBody.innerHTML += `<tr><td>${brand}</td><td><strong>${bal}</strong></td></tr>`;
-      });
-      
-      localStorage.setItem('myInventoryData', JSON.stringify(inventory));
-      updateDashboard();
-      checkAvailableStock();
+        document.querySelector('#summaryTable tbody').innerHTML = ALL_BRANDS.map(b => `<tr><td>${b}</td><td><b>${getBalance(b)}</b></td></tr>`).join('');
+        localStorage.setItem('myInventoryData', JSON.stringify(inventory));
+        updateDashboard();
     }
 
     document.getElementById('addForm').onsubmit = function(e) {
-      e.preventDefault();
-      const type = document.getElementById('type').value;
-      const name = document.getElementById('name').value;
-      const qty = parseInt(document.getElementById('quantity').value);
-      const price = parseFloat(document.getElementById('price').value);
-      
-      if (type === 'EXIT' && qty > getBalance(name)) {
-          alert(`Insufficient Stock! Only ${getBalance(name)} units left.`);
-          return;
-      }
+        e.preventDefault();
+        const type = document.getElementById('type').value;
+        const name = document.getElementById('name').value;
+        const price = parseFloat(document.getElementById('price').value);
+        const cdQty = parseInt(document.getElementById('coldDrinkQtyInput').value) || 0;
+        const chkQty = parseInt(document.getElementById('chakanaQtyInput').value) || 0;
+        let rawInput = document.getElementById('quantity').value.replace(/[^\d+]/g, '');
+        const liquorQty = rawInput.split('+').reduce((a, b) => a + (parseInt(b) || 0), 0);
+        if (liquorQty <= 0) return;
+        if (type === 'EXIT' && liquorQty > getBalance(name)) { alert("No Stock!"); return; }
 
-      const now = new Date();
-      const dateString = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        inventory.push({ 
+            date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+            timestamp: Date.now(), type, name, quantity: liquorQty, price, cdQty, chkQty 
+        });
 
-      inventory.push({ 
-          date: dateString, 
-          timestamp: now.getTime(), 
-          type, name, quantity: qty, price 
-      });
-      displayItems();
-      this.reset();
-      document.getElementById('stockWarning').innerText = "";
+        displayItems();
+        if (type === 'EXIT' && confirm("Print Bill?")) printBill(name, liquorQty, price, cdQty, chkQty);
+        document.getElementById('name').value = "";
+        document.getElementById('quantity').value = "";
+        document.getElementById('coldDrinkQtyInput').value = 0;
+        document.getElementById('chakanaQtyInput').value = 0;
+        document.getElementById('stockWarning').innerText = "";
     };
 
-    window.deleteItem = function(index) {
-      if(confirm("Permanently delete this record?")) { 
-          inventory.splice(index, 1); 
-          displayItems(); 
-      }
-    };
-
-    function clearAllData() {
-        if(confirm("DANGER: This will delete ALL history and stock records. Continue?")) { 
-            localStorage.clear(); 
-            inventory = []; 
-            displayItems(); 
-        }
-    }
-
+    window.deleteItem = (i) => { if(confirm("Delete?")) { inventory.splice(i, 1); displayItems(); } };
+    function clearAllData() { if(confirm("Clear All?")) { localStorage.clear(); inventory = []; displayItems(); } }
     displayItems();
 </script>
 </body>
