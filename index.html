@@ -1,301 +1,1159 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Daru Inventory & Billing System</title>
-  <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 20px; background-color: #f4f7f6; }
-    .container { max-width: 1250px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAIDEEP RESTO & BAR</title>
     
-    .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
-    .stat-card { background: #fff; padding: 15px; border-radius: 8px; border-left: 5px solid #007bff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; }
-    .stat-card h3 { margin: 0; font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
-    .stat-card p { margin: 10px 0 0; font-size: 1.3rem; font-weight: bold; color: #333; }
-    
-    .section-header { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
-    
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
-    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
-    th { background-color: #007bff; color: white; }
-    
-    form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; background: #ebf3ff; padding: 15px; border-radius: 8px; border: 1px solid #cfe2ff; }
-    .input-group { display: flex; flex-direction: column; }
-    label { font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #666; }
-    select, input { padding: 8px; border-radius: 4px; border: 1px solid #ccc; background: white; }
-    
-    .badge { padding: 3px 7px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; }
-    .badge-entry { background-color: #28a745; }
-    .badge-exit { background-color: #dc3545; }
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
-    button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-    .delete-btn { background-color: #dc3545; padding: 4px 8px; font-size: 11px; color: white; border: none; border-radius: 3px; cursor: pointer; }
-    .print-btn { background-color: #6f42c1; padding: 4px 8px; font-size: 11px; color: white; border: none; border-radius: 3px; cursor: pointer; margin-left: 5px; }
-    
-    #stockWarning { color: #dc3545; font-size: 11px; font-weight: bold; margin-top: 2px; }
-    .clear-storage { background-color: #6c757d; margin-top: 40px; font-size: 10px; opacity: 0.5; color: white; border: none; padding: 5px; cursor: pointer; border-radius: 3px; }
+    <style>
+        /* === Base CSS Styling === */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background-color: #f8fafc; 
+            color: #333; 
+        }
 
-    @media print {
-      body * { visibility: hidden; }
-      #printSection, #printSection * { visibility: visible; }
-      #printSection { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
-    }
-    
-    #printSection { display: none; padding: 40px; font-family: 'Courier New', Courier, monospace; max-width: 500px; margin: auto; }
-    .bill-header { text-align: center; border-bottom: 2px dashed #333; margin-bottom: 15px; padding-bottom: 15px; }
-  </style>
+        nav { 
+            background-color: #0f172a; 
+            padding: 1.5rem; 
+            text-align: center; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button { 
+            background-color: #3b82f6; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            margin: 0; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            font-size: 1rem;
+            font-weight: bold; 
+            transition: background 0.3s ease; 
+        }
+        
+        button:hover { background-color: #2563eb; }
+        button.active { background-color: #0ea5e9; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
+
+        .page { 
+            display: none; 
+            padding: 2.5rem; 
+            max-width: 1000px; 
+            margin: 2rem auto; 
+            background: white; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+        }
+
+        .page.active-page { 
+            display: block; 
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 0;}
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* === Billing Area & Cart CSS === */
+        .billing-header {
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+            border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px;
+        }
+        .billing-header h1 { border: none; margin: 0; padding: 0; }
+        
+        .context-controls { display: flex; align-items: center; gap: 10px; }
+        .btn-switch-context { background-color: #64748b; padding: 6px 12px; font-size: 0.85rem; border-radius: 20px;}
+        .btn-switch-context:hover { background-color: #475569; }
+
+        .category-bar { display: flex; gap: 10px; flex-wrap: wrap; width: 100%; margin-bottom: 20px; }
+        .category-chip {
+            background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;
+            padding: 8px 16px; border-radius: 20px; font-size: 0.95rem; margin: 0;
+            transition: all 0.2s ease;
+        }
+        .category-chip:hover { background-color: #e2e8f0; color: #0f172a; }
+        .category-chip.active { background-color: #0f172a; color: white; border-color: #0f172a; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        .cart-toggle-btn { background-color: #10b981; }
+        .cart-toggle-btn:hover { background-color: #059669; }
+
+        .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; }
+        .item-card {
+            border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px;
+            text-align: center; background: #fff; transition: transform 0.2s;
+            position: relative;
+        }
+        .item-card:hover:not(.out-of-stock) { transform: scale(1.02); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .item-card img { width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; border: 1px solid #e2e8f0;}
+        .item-card h4 { margin: 5px 0; font-size: 1.1rem; }
+        .item-card p { color: #64748b; font-weight: bold; margin-bottom: 15px; }
+        .item-card button { width: 100%; margin: 0; }
+        
+        .category-badge {
+            position: absolute; top: 10px; right: 10px;
+            background: #0f172a; color: white; padding: 3px 8px;
+            font-size: 0.7rem; border-radius: 12px; font-weight: bold;
+        }
+        
+        .stock-badge {
+            position: absolute; top: 10px; left: 10px;
+            background: #e2e8f0; color: #334155; padding: 3px 8px;
+            font-size: 0.7rem; border-radius: 12px; font-weight: bold;
+        }
+        .out-of-stock-badge {
+            position: absolute; top: 10px; left: 10px;
+            background: #ef4444; color: white; padding: 3px 8px;
+            font-size: 0.7rem; border-radius: 12px; font-weight: bold;
+            z-index: 2;
+        }
+        .item-card.out-of-stock {
+            opacity: 0.6; pointer-events: none; filter: grayscale(80%); border-color: #cbd5e1;
+        }
+        .item-card.out-of-stock button {
+            background: #94a3b8; cursor: not-allowed;
+        }
+
+        /* Cart Popup Window */
+        .cart-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 999;
+        }
+        .cart-popup {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: white; width: 90%; max-width: 400px; border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 1000;
+            display: flex; flex-direction: column; max-height: 80vh;
+        }
+        .cart-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #e2e8f0; }
+        .cart-header h2 { margin: 0; font-size: 1.3rem;}
+        .close-btn { background: #ef4444; padding: 5px 10px; }
+        .close-btn:hover { background: #dc2626; }
+        .cart-items-container { padding: 20px; overflow-y: auto; flex-grow: 1; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; }
+        .cart-item-details { flex-grow: 1; }
+        .cart-item-title { font-weight: bold; }
+        .cart-item-price { color: #64748b; font-size: 0.9em; }
+        .cart-item-actions button { padding: 4px 8px; font-size: 1rem; margin: 0 2px; }
+        .btn-remove { background: #ef4444; }
+        .cart-footer { padding: 15px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; display: flex; flex-direction: column; gap: 15px; }
+        .cart-total-row { display: flex; justify-content: space-between; align-items: center; }
+        .cart-total-row h3 { margin: 0; color: #0f172a; }
+        
+        .payment-methods { display: flex; gap: 10px; width: 100%; margin-bottom: 5px; }
+        .pay-btn { 
+            flex: 1; padding: 8px; background-color: #f1f5f9; color: #64748b; 
+            border: 2px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; 
+            cursor: pointer; font-weight: bold; transition: all 0.2s; margin: 0;
+        }
+        .pay-btn:hover { background-color: #e2e8f0; }
+        .pay-btn.active-cash { background-color: #10b981; color: white; border-color: #10b981; }
+        .pay-btn.active-online { background-color: #3b82f6; color: white; border-color: #3b82f6; }
+
+        .checkout-btn { background-color: #0f172a; width: 100%; padding: 12px; font-size: 1.1rem; }
+        .checkout-btn:hover { background-color: #1e293b; }
+        .show-cart { display: block; }
+
+        /* === Inventory, History & General Tables CSS === */
+        .inventory-form {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+            background: #f8fafc; padding: 20px; border-radius: 8px;
+            border: 1px solid #e2e8f0; margin-bottom: 30px;
+        }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group.full-width { grid-column: span 2; }
+        .form-group label { font-weight: 600; margin-bottom: 5px; color: #334155; font-size: 0.9rem;}
+        .form-group input, .form-group select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 1rem; }
+        .form-group input[type="file"] { padding: 7px; background: white; }
+        
+        .add-stock-btn { grid-column: span 2; background-color: #f59e0b; padding: 12px; margin-top: 10px; }
+        .add-stock-btn:hover { background-color: #d97706; }
+
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; }
+        .data-table th, .data-table td { border: 1px solid #e2e8f0; padding: 12px 10px; text-align: left; vertical-align: middle; }
+        .data-table th { background-color: #0f172a; color: white; }
+        .data-table tr:nth-child(even) { background-color: #f8fafc; }
+        .table-img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; display: block;}
+        
+        .cat-tag { background: #e2e8f0; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; color: #334155;}
+        .date-tag { color: #64748b; font-size: 0.85em; }
+        
+        .delete-item-btn { background: #ef4444; color: white; padding: 6px 12px; font-size: 0.85rem; border-radius: 4px; margin: 0; width: 100%; }
+        .delete-item-btn:hover { background: #dc2626; }
+        
+        .history-items-list { margin: 0; padding-left: 20px; font-size: 0.9rem; color: #475569;}
+
+        /* === Table System CSS === */
+        .tables-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; margin-top: 20px; }
+        .dining-table {
+            padding: 30px 10px; border-radius: 12px; text-align: center; font-weight: bold; font-size: 1.2rem;
+            cursor: pointer; transition: all 0.2s; border: 3px solid #cbd5e1; background: white;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        .dining-table:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
+        .dining-table.available { background: #dcfce3; border-color: #10b981; color: #065f46; }
+        .dining-table.occupied { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+        .table-status-label { font-size: 0.8rem; background: rgba(255,255,255,0.9); padding: 4px 10px; border-radius: 12px; color: #333; }
+        .table-amount { font-size: 1rem; color: #dc2626; margin-top: 5px; }
+
+        /* === Dashboard CSS === */
+        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-top: 20px; }
+        .dash-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; text-align: center; display: flex; flex-direction: column; justify-content: center;}
+        .dash-card h3 { color: #64748b; font-size: 1rem; margin-top: 0; text-transform: uppercase; letter-spacing: 1px;}
+        .dash-card .stat { font-size: 2.2rem; font-weight: bold; color: #0f172a; margin: 10px 0; }
+        
+        .split-stats { display: flex; justify-content: space-between; margin-top: 15px; font-size: 0.95rem; font-weight: bold; padding-top: 15px; border-top: 1px solid #e2e8f0; }
+        .cash-stat { color: #10b981; }
+        .online-stat { color: #3b82f6; }
+
+        /* === Profile & Khata CSS === */
+        .profile-container { background: white; padding: 35px; border-radius: 12px; border: 1px solid #e2e8f0; max-width: 650px; margin: 20px auto; box-shadow: 0 4px 10px rgba(0,0,0,0.05);}
+        .profile-header { display: flex; align-items: center; gap: 20px; margin-bottom: 25px; border-bottom: 2px solid #f1f5f9; padding-bottom: 25px;}
+        .profile-avatar { width: 90px; height: 90px; background: #3b82f6; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; }
+        
+        .profile-section { margin-bottom: 25px; }
+        .profile-section h3 { color: #0f172a; border-left: 4px solid #3b82f6; padding-left: 10px; margin-bottom: 15px; }
+        .profile-info-grid { display: grid; grid-template-columns: 1fr; gap: 12px; color: #334155; font-size: 1.05rem; }
+        .profile-info-grid strong { color: #0f172a; display: inline-block; width: 150px; }
+        
+        .contact-pill { background: #f1f5f9; padding: 4px 10px; border-radius: 15px; border: 1px solid #cbd5e1; font-size: 0.9rem; display: inline-block; margin-right: 5px; margin-bottom: 5px;}
+        
+        .credit-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+        .credit-name { font-weight: bold; color: #334155; font-size: 1.05rem;}
+        .credit-amount { color: #ef4444; font-weight: bold; margin-right: 15px; font-size: 1.1rem;}
+        .btn-settle { background: #10b981; padding: 6px 12px; font-size: 0.85rem; }
+        .btn-settle:hover { background: #059669; }
+        .qr-image-wrapper:hover { transform: scale(1.02); }
+
+        /* === PRINT MEDIA QUERY === */
+        @media print {
+            body * { display: none !important; }
+            #receipt-print-area, #receipt-print-area * { display: block !important; }
+            #receipt-print-area { 
+                position: absolute; left: 0; top: 0; width: 100%; max-width: 400px;
+                padding: 20px; background: white; color: black; font-family: monospace; 
+                font-size: 14px;
+            }
+            .receipt-header { text-align: center; border-bottom: 1px dashed black; padding-bottom: 10px; margin-bottom: 10px;}
+            .receipt-item { display: flex; justify-content: space-between; margin-bottom: 5px;}
+            .receipt-total { border-top: 1px dashed black; margin-top: 10px; padding-top: 10px; font-weight: bold; font-size: 16px;}
+            .receipt-total-row { display: flex; justify-content: space-between;}
+        }
+    </style>
 </head>
-<body>
+<body onload="initializeStore()">
 
-<div class="container">
-  <h1>Daru Inventory Dashboard</h1>
+    <nav>
+        <button class="nav-btn active" id="nav-billing" onclick="switchPage('home', this)">Billing Area</button>
+        <button class="nav-btn" onclick="switchPage('table-system', this)">Table System</button>
+        <button class="nav-btn" onclick="switchPage('inventory', this)">Inventory</button>
+        <button class="nav-btn" onclick="switchPage('history', this)">History</button>
+        <button class="nav-btn" id="nav-dashboard" onclick="switchPage('dashboard', this)">Dashboard 🔒</button>
+        <button class="nav-btn" onclick="switchPage('profile', this)">Profile</button>
+    </nav>
 
-  <div class="dashboard">
-    <div class="stat-card" style="border-left-color: #007bff;"><h3>Total In Stock</h3><p id="totalQty">0</p></div>
-    <div class="stat-card" style="border-left-color: #28a745;"><h3>Stock Valuation</h3><p id="totalVal">₹0</p></div>
-    <div class="stat-card" style="border-left-color: #ffc107;"><h3>Available Brands</h3><p id="uniqueCount">0</p></div>
-    <div class="stat-card" style="border-left-color: #dc3545;"><h3 id="dailyLabelQty">Today's Sales (Qty)</h3><p id="dailyExitQty">0</p></div>
-    <div class="stat-card" style="border-left-color: #6f42c1;"><h3 id="dailyLabelRev">Today's Revenue</h3><p id="dailyRevenue">₹0</p></div>
-  </div>
+    <div id="receipt-print-area" style="display: none;"></div>
 
-  <h2>Add Transaction</h2>
-  <form id="addForm">
-    <div class="input-group">
-      <label>Type</label>
-      <select id="type" required>
-          <option value="ENTRY">ENTRY (Stock In)</option>
-          <option value="EXIT">EXIT (Stock Out)</option>
-      </select>
-    </div>
-    
-    <div class="input-group">
-      <label>Brand Name</label>
-      <select id="name" required onchange="checkAvailableStock()">
-        <option value="">Select Brand</option>
-        <option value="IB">IB</option><option value="RS">RS</option><option value="RC">RC</option>
-        <option value="MD">MD</option><option value="OC BLUE">OC BLUE</option>
-        <option value="GREEN LABEL">GREEN LABEL</option><option value="R.GREEN">R.GREEN</option>
-        <option value="ICONIC W.">ICONIC W.</option><option value="MD RUM">MD RUM</option>
-        <option value="DSP">DSP</option><option value="B7">B7</option><option value="ROMANOV">ROMANOV</option>
-        <option value="MAGIC MOVE.">MAGIC MOVE.</option><option value="DR.BANDY">DR.BANDY</option>
-        <option value="GOA GIN">GOA GIN</option><option value="GRANDMASTER FAV.">GRANDMASTER FAV.</option>
-        <option value="Signature">Signature</option><option value="Blender">Blender</option>
-        <option value="MOTHA">MOTHA</option><option value="CHOTHA">CHOTHA</option>
-      </select>
-      <span id="stockWarning"></span>
+    <div id="home" class="page active-page">
+        <div class="billing-header">
+            <div class="context-controls">
+                <h1 id="billing-title" style="border:none; padding:0; margin:0;">Billing: Walk-in</h1>
+                <button id="btn-walkin" class="btn-switch-context" style="display:none;" onclick="setActiveBillingContext('walk-in')">Switch to Walk-in</button>
+            </div>
+            
+            <button class="cart-toggle-btn" onclick="toggleCart()">
+                🛒 View Cart (<span id="cart-count-badge">0</span>)
+            </button>
+        </div>
+        <div id="category-bar" class="category-bar"></div>
+        <div class="items-grid" id="billing-items-grid"></div>
     </div>
 
-    <div class="input-group"><label>CD Qty (₹20)</label><input type="number" id="coldDrinkQtyInput" value="0" min="0" style="width: 65px;"></div>
-    <div class="input-group"><label>Chakana Qty (₹10)</label><input type="number" id="chakanaQtyInput" value="0" min="0" style="width: 65px;"></div>
+    <div id="cart-overlay" class="cart-overlay">
+        <div class="cart-popup">
+            <div class="cart-header">
+                <h2 id="cart-title-text">Your Cart (Walk-in)</h2>
+                <button class="close-btn" onclick="toggleCart()">Close</button>
+            </div>
+            <div id="cart-items-container" class="cart-items-container">
+                <p style="text-align:center; color:#94a3b8;">Your cart is empty.</p>
+            </div>
+            <div class="cart-footer">
+                <div class="cart-total-row">
+                    <h3>Total:</h3>
+                    <h3>₹<span id="cart-total-price">0</span></h3>
+                </div>
+                
+                <p style="margin: 0; font-size: 0.85rem; color: #64748b; font-weight: bold;">Select Payment Method:</p>
+                <div class="payment-methods">
+                    <button id="btn-cash" class="pay-btn active-cash" onclick="setPaymentMethod('Cash')">💵 Cash</button>
+                    <button id="btn-online" class="pay-btn" onclick="setPaymentMethod('Online')">💳 Online</button>
+                </div>
 
-    <div class="input-group">
-      <label>Liquor Qty (e.g. 2+4)</label>
-      <input list="qtyOptions" id="quantity" placeholder="Type/Select" required style="width: 110px;">
-      <datalist id="qtyOptions">
-        <option value="1">1</option><option value="6">6</option><option value="12">12</option>
-        <option value="24">24</option><option value="48">48 (1 Box)</option><option value="96">96 (2 Box)</option>
-      </datalist>
+                <button class="checkout-btn" onclick="processCheckout()">Bill Out / Checkout</button>
+            </div>
+        </div>
     </div>
 
-    <div class="input-group">
-      <label>Buying Rate (₹)</label>
-      <select id="price" required>
-        <option value="175">175</option><option value="210">210</option><option value="220">220</option>
-        <option value="230">230</option><option value="250">250</option><option value="260">260</option>
-        <option value="270">270</option><option value="300">300</option><option value="310">310</option>
-        <option value="380">380</option><option value="3500">3500</option><option value="3700">3700</option>
-      </select>
+    <div id="table-system" class="page">
+        <h1>Table Management</h1>
+        <p style="color: #64748b;">Click an available table to open a tab. Click an occupied table to continue billing.</p>
+        <div class="tables-grid" id="tables-grid-container"></div>
     </div>
-    <button type="submit">Submit Entry</button>
-  </form>
 
-  <div class="section-header">
-    <h2>History</h2>
-    <select id="historyFilter" onchange="displayItems()"><option value="all">Full History</option><option value="month">This Month</option></select>
-  </div>
+    <div id="inventory" class="page">
+        <h1>Stock In Entry</h1>
+        <div class="inventory-form">
+            <div class="form-group full-width">
+                <label>Item Photo (Optional)</label>
+                <input type="file" id="inv-img" accept="image/*">
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select id="inv-category">
+                    <option value="Whiskey">Whiskey</option>
+                    <option value="Vodka">Vodka</option>
+                    <option value="Rum">Rum</option>
+                    <option value="Gin">Gin</option>
+                    <option value="Brandy">Brandy</option>
+                    <option value="Beer">Beer</option>
+                    <option value="Desi50ml">Desi50ml</option>
+                    <option value="Desi180ml">Desi180ml</option>
+                    <option value="Wine">Wine</option>
+                    <option value="Premium">Premium</option>
+                    <option value="Tequila">Tequila</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Item Name</label>
+                <input type="text" id="inv-name" placeholder="e.g., Old Monk">
+            </div>
+            <div class="form-group">
+                <label>Quantity</label>
+                <input type="number" id="inv-qty" placeholder="0" min="1">
+            </div>
+            <div class="form-group">
+                <label>Buying Rate (₹)</label>
+                <input type="number" id="inv-buy" placeholder="0.00" min="0">
+            </div>
+            <div class="form-group full-width">
+                <label>Billing Rate / Selling Price (₹)</label>
+                <input type="number" id="inv-sell" placeholder="0.00" min="0">
+            </div>
+            <button class="add-stock-btn" onclick="addStockItem()">Add to Stock</button>
+        </div>
 
-  <table id="itemsTable">
-    <thead><tr><th>Date/Time</th><th>Status</th><th>Brand</th><th>Qty</th><th>CD</th><th>CHK</th><th>Total</th><th>Actions</th></tr></thead>
-    <tbody></tbody>
-  </table>
-
-  <div style="margin-top:30px;">
-    <h2>Stock Balance</h2>
-    <table id="summaryTable" style="width: 300px; border: 2px solid #007bff;">
-        <thead><tr><th>Brand</th><th>Stock</th></tr></thead><tbody></tbody>
-    </table>
-  </div>
-  <button class="clear-storage" onclick="clearAllData()">Reset Memory</button>
-</div>
-
-<div id="printSection">
-    <div class="bill-header">
-        <h1 style="margin: 0; font-size: 24px;">INVOICE</h1>
-        <p style="margin: 5px 0; font-weight: bold;">DARU INVENTORY SYSTEM</p>
-        <p id="billDate" style="font-size: 11px;"></p>
+        <h3>Current Stock Ledger</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Photo</th>
+                    <th>Category</th>
+                    <th>Item Name</th>
+                    <th>Qty</th>
+                    <th>Buy (₹)</th>
+                    <th>Bill (₹)</th>
+                    <th>Date Added</th>
+                    <th>Action</th> 
+                </tr>
+            </thead>
+            <tbody id="stock-table-body"></tbody>
+        </table>
     </div>
-    <table style="width:100%; border-collapse: collapse; margin-top:15px;">
-        <thead>
-            <tr style="border-bottom: 2px solid #000; border-top: 2px solid #000;">
-                <th style="padding: 10px 0; text-align: left;">Description</th>
-                <th style="text-align: center;">Qty</th>
-                <th style="text-align: right;">Amount</th>
-            </tr>
-        </thead>
-        <tbody id="billBody"></tbody>
-    </table>
-    <div style="text-align: center; margin-top: 30px; border-top: 2px dashed #333; padding-top: 20px;">
-        <p style="margin: 0; font-size: 12px; font-weight: bold;">GRAND TOTAL</p>
-        <h1 style="margin: 5px 0; font-size: 32px;" id="billTotal"></h1>
+
+    <div id="history" class="page">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; margin-bottom: 15px; padding-bottom: 10px;">
+            <h1 style="border: none; padding: 0; margin: 0;">Monthly Transaction History</h1>
+            <button style="background-color: #ef4444;" onclick="exportHistoryPDF()">📄 Export to PDF</button>
+        </div>
+        <p style="color: #64748b;">A log of all billed checkouts for the current month.</p>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Date & Time</th>
+                    <th>Billed Items</th>
+                    <th>Payment Method</th>
+                    <th>Total Amount</th>
+                </tr>
+            </thead>
+            <tbody id="history-table-body"></tbody>
+        </table>
     </div>
-</div>
 
-<script>
-    let inventory = JSON.parse(localStorage.getItem('myInventoryData')) || [];
-    const CD_PRICE = 20;
-    const CHK_PRICE = 10;
+    <div id="dashboard" class="page">
+        <h1>Business Dashboard</h1>
+        <p style="color: #64748b;">Live performance statistics based on current month and today's activity.</p>
+        
+        <div class="dash-grid">
+            <div class="dash-card">
+                <h3>Today's Sale</h3>
+                <div class="stat" id="dash-today-sale">₹0</div>
+                <div class="split-stats">
+                    <span class="cash-stat">💵 <span id="dash-today-cash">₹0</span></span>
+                    <span class="online-stat">💳 <span id="dash-today-online">₹0</span></span>
+                </div>
+            </div>
+            <div class="dash-card">
+                <h3>Monthly Sale</h3>
+                <div class="stat" id="dash-monthly-sale">₹0</div>
+                <div class="split-stats">
+                    <span class="cash-stat">💵 <span id="dash-monthly-cash">₹0</span></span>
+                    <span class="online-stat">💳 <span id="dash-monthly-online">₹0</span></span>
+                </div>
+            </div>
+            <div class="dash-card">
+                <h3>Monthly Purchase</h3>
+                <div class="stat" id="dash-monthly-purchase">₹0</div>
+            </div>
+            <div class="dash-card">
+                <h3>Today's Orders</h3>
+                <div class="stat" id="dash-today-orders">0</div>
+            </div>
+            <div class="dash-card">
+                <h3>Monthly Orders</h3>
+                <div class="stat" id="dash-monthly-orders">0</div>
+            </div>
+        </div>
+    </div>
 
-    const ALL_BRANDS = ["IB", "RS", "RC", "MD", "OC BLUE", "GREEN LABEL", "R.GREEN", "ICONIC W.", "MD RUM", "DSP", "B7", "ROMANOV", "MAGIC MOVE.", "DR.BANDY", "GOA GIN", "GRANDMASTER FAV.", "Blender", "Signature", "MOTHA", "CHOTHA"];
+    <div id="profile" class="page">
+        <h1>Business Profile & Khata</h1>
+        <div class="profile-container">
+            <div class="profile-header">
+                <div class="profile-avatar">RS</div>
+                <div>
+                    <h2 style="margin: 0; color: #0f172a;">Rudra Shinde</h2>
+                    <p style="margin: 5px 0 0 0; color: #64748b;">System Administrator</p>
+                </div>
+            </div>
 
-    function getProfitMargin(itemName) {
-        if (itemName === "MOTHA") return 1200;
-        if (itemName === "CHOTHA") return 1100;
-        return 50; 
-    }
+            <div class="profile-section">
+                <h3>Restaurant Details</h3>
+                <div class="profile-info-grid">
+                    <div><strong>Restaurant Name:</strong> SAIDEEP RESTO & BAR </div>
+                    <div><strong>Type:</strong> Fine Dining & Bar</div>
+                    <div><strong>Tagline:</strong> <em>"piyo aur pine do."</em></div>
+                    <div>
+                        <strong>Contact Numbers:</strong><br>
+                        <span class="contact-pill">📞 +91 98765 43210</span>
+                        <span class="contact-pill">📞 +91 87654 32109</span>
+                        <span class="contact-pill">📞 +91 76543 21098</span>
+                    </div>
+                </div>
+            </div>
 
-    function getBalance(itemName) {
-        let bal = 0;
-        inventory.forEach(i => { if(i.name === itemName) bal += (i.type === 'EXIT' ? -i.quantity : i.quantity); });
-        return bal;
-    }
+            <div class="profile-section" style="padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                <h3>Receive Online Payments</h3>
+                <div style="text-align: center; padding: 30px 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <input type="file" id="qr-upload" accept="image/*" style="display: none;" onchange="handleQRUpload(event)">
+                    
+                    <label for="qr-upload" style="cursor: pointer; display: inline-block;">
+                        <p style="margin: 0 0 15px 0; font-weight: bold; color: #0f172a; font-size: 1.3rem; letter-spacing: 0.5px;">Scan to Pay</p>
+                        <img id="qr-display" class="qr-image-wrapper" src="https://via.placeholder.com/250x250/e2e8f0/64748b?text=Click+to+Upload+QR" alt="Upload UPI QR Code" style="border-radius: 12px; border: 4px solid white; box-shadow: 0 8px 16px rgba(0,0,0,0.15); width: 250px; height: 250px; object-fit: contain; background: white; transition: transform 0.2s ease;">
+                    </label>
+                    
+                    <div style="margin-top: 25px;">
+                        <button type="button" style="background: #3b82f6; padding: 10px 20px; font-size: 1rem;" onclick="document.getElementById('qr-upload').click()">Upload / Change QR Code</button>
+                    </div>
+                </div>
+            </div>
 
-    function checkAvailableStock() {
-        const name = document.getElementById('name').value;
-        const warn = document.getElementById('stockWarning');
-        if (name) {
-            const b = getBalance(name);
-            warn.innerText = `Stock: ${b}`;
-            warn.style.color = b <= 0 ? "red" : "green";
-        } else warn.innerText = "";
-    }
+            <div class="profile-section" style="padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                <h3>Credit Customers (Udhaari)</h3>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                    <input type="text" id="credit-name" placeholder="Customer Name" style="flex: 2; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 1rem;">
+                    <input type="number" id="credit-amount" placeholder="Amount (₹)" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 1rem;">
+                    <button onclick="addCreditCustomer()" style="margin: 0; background: #0f172a;">Add</button>
+                </div>
+                <div id="credit-list-container" style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0 15px;"></div>
+            </div>
+        </div>
+    </div>
 
-    function printBill(name, liquorQty, price, cdQty, chkQty) {
-        const profit = getProfitMargin(name);
-        const liquorTotal = liquorQty * (price + profit);
-        const cdTotal = cdQty * CD_PRICE;
-        const chkTotal = chkQty * CHK_PRICE;
-        const grandTotal = liquorTotal + cdTotal + chkTotal;
-        document.getElementById('billDate').innerText = "Date: " + new Date().toLocaleString();
-        document.getElementById('billTotal').innerText = '₹' + grandTotal.toLocaleString('en-IN');
-        let rowsHtml = `<tr><td style="padding:8px 0;">${name}</td><td style="text-align: center;">${liquorQty}</td><td style="text-align: right;">₹${liquorTotal.toLocaleString('en-IN')}</td></tr>`;
-        if (cdQty > 0) rowsHtml += `<tr><td style="padding:8px 0; font-style: italic;">Cold Drink (₹${CD_PRICE})</td><td style="text-align: center;">${cdQty}</td><td style="text-align: right;">₹${cdTotal.toLocaleString('en-IN')}</td></tr>`;
-        if (chkQty > 0) rowsHtml += `<tr><td style="padding:8px 0; font-style: italic;">Chakana (₹${CHK_PRICE})</td><td style="text-align: center;">${chkQty}</td><td style="text-align: right;">₹${chkTotal.toLocaleString('en-IN')}</td></tr>`;
-        document.getElementById('billBody').innerHTML = rowsHtml;
-        window.print();
-    }
+    <script>
+        // --- 1. GLOBAL STATE & DATE FORMATTING ---
+        function getFormattedDate(date = new Date()) {
+            const d = String(date.getDate()).padStart(2, '0');
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const y = date.getFullYear();
+            return `${d}/${m}/${y}`;
+        }
+        
+        const todayStr = getFormattedDate(); 
+        
+        // EMPTIED: Fresh start for production
+        let inventoryData = [];
+        
+        let walkInCart = {}; 
+        let cart = walkInCart; 
+        let activeBillingContext = 'walk-in'; 
+        
+        let activeCategoryFilter = 'All';
+        let selectedPaymentMethod = 'Cash'; 
+        let transactionHistory = [];
+        let currentOrderCounter = 1;
+        
+        let diningTables = Array.from({length: 10}, (_, i) => ({ 
+            id: i + 1, 
+            status: 'available',
+            cart: {} 
+        }));
 
-    // UPDATED DASHBOARD LOGIC (FIXED BRAND COUNT)
-    function updateDashboard() {
-        let stock = 0, valuation = 0, dailyQty = 0, dailyRev = 0;
-        const now = new Date();
-        const todayStr = now.toDateString();
+        let creditCustomers = [];
+        let lastDashboardAccessTime = 0; 
+        const DASHBOARD_TIMEOUT = 10 * 60 * 1000; 
 
-        // Calculate Totals and Daily Stats
-        inventory.forEach(item => {
-            const itemDate = new Date(item.timestamp);
-            const isToday = itemDate.toDateString() === todayStr;
+        function initializeStore() {
+            sortInventory(); 
+            syncCategories(); 
+            renderInventoryTable();
+            renderBillingItems();
+            renderHistoryTable(); 
+            renderDiningTables(); 
+            updateDashboard();
+            renderCreditList(); 
+        }
 
-            if (item.type === 'EXIT') {
-                stock -= item.quantity;
-                valuation -= (item.quantity * item.price);
-                if(isToday) { 
-                    dailyQty += item.quantity; 
-                    dailyRev += (item.quantity * (item.price + getProfitMargin(item.name))) + ((item.cdQty || 0) * CD_PRICE) + ((item.chkQty || 0) * CHK_PRICE); 
+        // --- 2. PAGE SWITCHING & AUTHENTICATION ---
+        function switchPage(pageId, clickedButton) {
+            if (pageId === 'dashboard') {
+                const currentTime = Date.now();
+                if (currentTime - lastDashboardAccessTime > DASHBOARD_TIMEOUT) {
+                    const enteredPassword = prompt("Authentication Required\nPlease enter the Admin Password to access the Dashboard:");
+                    if (enteredPassword !== "rudra@") {
+                        alert("Access Denied: Incorrect Password.");
+                        return; 
+                    }
+                    lastDashboardAccessTime = currentTime;
+                }
+                updateDashboard(); 
+            }
+
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active-page');
+            clickedButton.classList.add('active');
+        }
+
+        // --- 3. DYNAMIC CATEGORY SYNCING ---
+        function syncCategories() {
+            const uniqueCategories = [...new Set(inventoryData.map(item => item.category))].sort();
+            if (activeCategoryFilter !== 'All' && !uniqueCategories.includes(activeCategoryFilter)) {
+                activeCategoryFilter = 'All';
+            }
+            const bar = document.getElementById('category-bar');
+            bar.innerHTML = `<button class="category-chip ${activeCategoryFilter === 'All' ? 'active' : ''}" onclick="setCategoryFilter('All')">All Categories</button>`;
+            uniqueCategories.forEach(category => {
+                const isActive = activeCategoryFilter === category ? 'active' : '';
+                bar.innerHTML += `<button class="category-chip ${isActive}" onclick="setCategoryFilter('${category}')">${category}</button>`;
+            });
+        }
+
+        function setCategoryFilter(category) {
+            activeCategoryFilter = category;
+            syncCategories(); 
+            renderBillingItems(); 
+        }
+
+        // --- 4. BINDING INVENTORY TO BILLING UI (REAL-TIME STOCK) ---
+        function renderBillingItems() {
+            const grid = document.getElementById('billing-items-grid');
+            grid.innerHTML = ''; 
+            if (inventoryData.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: #64748b; font-size: 1.1rem; padding: 40px 0;">No items in inventory. Please add stock from the Inventory tab first.</p>';
+                return;
+            }
+            const filteredData = activeCategoryFilter === 'All' 
+                ? inventoryData 
+                : inventoryData.filter(item => item.category === activeCategoryFilter);
+
+            if (filteredData.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">No items found in this category.</p>';
+                return;
+            }
+            
+            filteredData.forEach(item => {
+                const safeName = item.name.replace(/'/g, "\\'"); 
+                const isOutOfStock = item.quantity <= 0;
+                
+                const stockBadgeHTML = isOutOfStock 
+                    ? `<span class="out-of-stock-badge">Out of Stock</span>` 
+                    : `<span class="stock-badge">Stock: ${item.quantity}</span>`;
+                
+                const cardClass = isOutOfStock ? 'item-card out-of-stock' : 'item-card';
+                
+                const buttonHTML = isOutOfStock 
+                    ? `<button disabled>Unavailable</button>` 
+                    : `<button onclick="addToCart('${safeName}', ${item.sellRate})">Add to Cart</button>`;
+
+                grid.innerHTML += `
+                    <div class="${cardClass}">
+                        ${stockBadgeHTML}
+                        <span class="category-badge">${item.category}</span>
+                        <img src="${item.imgUrl}" alt="${item.name}">
+                        <h4>${item.name}</h4>
+                        <p>₹${item.sellRate}</p>
+                        ${buttonHTML}
+                    </div>
+                `;
+            });
+        }
+
+        // --- 5. INVENTORY LOGIC ---
+        function addStockItem() {
+            const category = document.getElementById('inv-category').value; 
+            const name = document.getElementById('inv-name').value.trim();
+            const qty = parseInt(document.getElementById('inv-qty').value);
+            const buyRate = parseFloat(document.getElementById('inv-buy').value);
+            const sellRate = parseFloat(document.getElementById('inv-sell').value);
+            const fileInput = document.getElementById('inv-img');
+            
+            const currentDate = getFormattedDate(); 
+
+            if (!name || isNaN(qty) || isNaN(buyRate) || isNaN(sellRate)) {
+                alert("Please fill in all text fields with valid data.");
+                return;
+            }
+            
+            let finalImgUrl = `https://via.placeholder.com/100/e2e8f0/64748b?text=${name.substring(0,4)}`;
+            
+            const existingItem = inventoryData.find(i => i.name.toLowerCase() === name.toLowerCase());
+
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    finalImgUrl = e.target.result; 
+                    if(existingItem) {
+                        existingItem.quantity += qty;
+                        existingItem.buyRate = buyRate;
+                        existingItem.sellRate = sellRate;
+                        existingItem.imgUrl = finalImgUrl;
+                    } else {
+                        inventoryData.push({ category: category, name: name, quantity: qty, buyRate: buyRate, sellRate: sellRate, date: currentDate, imgUrl: finalImgUrl });
+                    }
+                    finishAddingStock();
+                }
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                if(existingItem) {
+                    existingItem.quantity += qty;
+                    existingItem.buyRate = buyRate;
+                    existingItem.sellRate = sellRate;
+                } else {
+                    inventoryData.push({ category: category, name: name, quantity: qty, buyRate: buyRate, sellRate: sellRate, date: currentDate, imgUrl: finalImgUrl });
+                }
+                finishAddingStock();
+            }
+        }
+
+        function removeStockItem(index) {
+            if (confirm("Are you sure you want to remove this item from the inventory?")) {
+                inventoryData.splice(index, 1);
+                syncCategories(); 
+                renderInventoryTable();
+                renderBillingItems(); 
+                updateDashboard(); 
+            }
+        }
+
+        function sortInventory() { inventoryData.sort((a, b) => a.category.localeCompare(b.category)); }
+
+        function clearInventoryForm() {
+            document.getElementById('inv-category').selectedIndex = 0;
+            document.getElementById('inv-name').value = '';
+            document.getElementById('inv-qty').value = '';
+            document.getElementById('inv-buy').value = '';
+            document.getElementById('inv-sell').value = '';
+            document.getElementById('inv-img').value = ''; 
+        }
+
+        function finishAddingStock() {
+            clearInventoryForm();
+            sortInventory();        
+            syncCategories(); 
+            renderInventoryTable(); 
+            renderBillingItems();
+            updateDashboard();  
+            alert("Stock updated successfully!");
+        }
+
+        function renderInventoryTable() {
+            const tableBody = document.getElementById('stock-table-body');
+            tableBody.innerHTML = ''; 
+            if (inventoryData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No items in stock yet.</td></tr>';
+                return;
+            }
+            inventoryData.forEach((item, index) => {
+                tableBody.innerHTML += `
+                    <tr>
+                        <td><img src="${item.imgUrl}" class="table-img" alt="img"></td>
+                        <td><span class="cat-tag">${item.category}</span></td>
+                        <td><strong>${item.name}</strong></td>
+                        <td>${item.quantity}</td>
+                        <td>₹${item.buyRate.toFixed(2)}</td>
+                        <td>₹${item.sellRate.toFixed(2)}</td>
+                        <td class="date-tag">${item.date}</td>
+                        <td><button class="delete-item-btn" onclick="removeStockItem(${index})">Remove</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // --- 6. CART & CHECKOUT LOGIC WITH CONTEXT SWITCHING ---
+        function setActiveBillingContext(context) {
+            activeBillingContext = context;
+            
+            const btnWalkin = document.getElementById('btn-walkin');
+            const title = document.getElementById('billing-title');
+            const cartTitle = document.getElementById('cart-title-text');
+
+            if (context === 'walk-in') {
+                cart = walkInCart; 
+                title.innerText = "Billing: Walk-in";
+                cartTitle.innerText = "Your Cart (Walk-in)";
+                btnWalkin.style.display = 'none';
+            } else {
+                const table = diningTables.find(t => t.id === context);
+                cart = table.cart; 
+                title.innerText = `Billing: Table ${context}`;
+                cartTitle.innerText = `Your Cart (Table ${context})`;
+                btnWalkin.style.display = 'block';
+            }
+            updateCartUI();
+        }
+
+        function toggleCart() { document.getElementById('cart-overlay').classList.toggle('show-cart'); }
+
+        function addToCart(itemName, itemPrice) {
+            const invItem = inventoryData.find(i => i.name === itemName);
+            const currentQtyInCart = cart[itemName] ? cart[itemName].quantity : 0;
+            
+            if (currentQtyInCart >= invItem.quantity) {
+                alert(`Cannot add more. Only ${invItem.quantity} left in stock.`);
+                return;
+            }
+
+            if (cart[itemName]) { cart[itemName].quantity += 1; } 
+            else { cart[itemName] = { price: itemPrice, quantity: 1 }; }
+            updateCartUI();
+        }
+
+        function removeFromCart(itemName) {
+            if (cart[itemName]) {
+                cart[itemName].quantity -= 1;
+                if (cart[itemName].quantity <= 0) { delete cart[itemName]; }
+            }
+            updateCartUI();
+        }
+
+        function setPaymentMethod(method) {
+            selectedPaymentMethod = method;
+            document.getElementById('btn-cash').className = 'pay-btn';
+            document.getElementById('btn-online').className = 'pay-btn';
+            if(method === 'Cash') {
+                document.getElementById('btn-cash').classList.add('active-cash');
+            } else {
+                document.getElementById('btn-online').classList.add('active-online');
+            }
+        }
+
+        function processCheckout() {
+            if (Object.keys(cart).length === 0) {
+                alert("The cart is empty! Add items before billing out.");
+                return; 
+            }
+            
+            let finalTotal = 0;
+            let purchasedItemsList = []; 
+            // We save a copy of the cart to pass to the print function before we wipe it out
+            let cartSnapshot = JSON.parse(JSON.stringify(cart)); 
+            
+            for (let itemName in cart) { 
+                let item = cart[itemName];
+                finalTotal += item.price * item.quantity; 
+                purchasedItemsList.push(`<li>${item.quantity}x ${itemName} (₹${item.price * item.quantity})</li>`);
+                
+                let invItem = inventoryData.find(i => i.name === itemName);
+                if (invItem) {
+                    invItem.quantity -= item.quantity;
+                    if (invItem.quantity < 0) invItem.quantity = 0; 
+                }
+            }
+            
+            const now = new Date();
+            const dateStr = getFormattedDate(now);
+            const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+            
+            const prefix = activeBillingContext === 'walk-in' ? 'WI' : `T${activeBillingContext}`;
+            const payType = selectedPaymentMethod === 'Cash' ? 'C' : 'O';
+            const formattedNumber = String(currentOrderCounter).padStart(4, '0');
+            const orderId = `${prefix}-${payType}-${formattedNumber}`;
+            currentOrderCounter++;
+
+            transactionHistory.unshift({
+                id: orderId,
+                date: dateStr,
+                time: timeStr,
+                itemsHTML: `<ul class="history-items-list">${purchasedItemsList.join('')}</ul>`,
+                total: finalTotal,
+                paymentMethod: selectedPaymentMethod
+            });
+
+            renderHistoryTable();
+            updateDashboard(); 
+            renderInventoryTable();
+            renderBillingItems(); 
+
+            const printConfirmed = confirm(`Success! Bill generated.\nOrder ID: ${orderId}\nTotal: ₹${finalTotal}\nPaid via: ${selectedPaymentMethod}\n\nWould you like to print the receipt?`);
+            
+            if(printConfirmed) {
+                printReceipt(orderId, dateStr, timeStr, cartSnapshot, finalTotal, selectedPaymentMethod);
+            }
+            
+            if (activeBillingContext === 'walk-in') {
+                walkInCart = {}; 
+                cart = walkInCart; 
+            } else {
+                const table = diningTables.find(t => t.id === activeBillingContext);
+                table.status = 'available';
+                table.cart = {}; 
+                renderDiningTables(); 
+                setActiveBillingContext('walk-in'); 
+            }
+
+            updateCartUI();
+            setPaymentMethod('Cash'); 
+            toggleCart();
+        }
+
+        function printReceipt(orderId, dateStr, timeStr, cartData, total, paymentMethod) {
+            const printArea = document.getElementById('receipt-print-area');
+            let itemsHtml = '';
+            
+            for(let key in cartData) {
+                let item = cartData[key];
+                itemsHtml += `
+                    <div class="receipt-item">
+                        <span>${item.quantity} x ${key}</span>
+                        <span>₹${item.price * item.quantity}</span>
+                    </div>
+                `;
+            }
+            
+            printArea.innerHTML = `
+                <div class="receipt-header">
+                    <h2 style="margin-bottom: 5px;"> SAIDEEP RESTO & BAR</h2>
+                    <div style="font-size: 12px; margin-bottom: 10px;">piyo aur pine do.</div>
+                    <div>Order ID: ${orderId}</div>
+                    <div>${dateStr} | ${timeStr}</div>
+                </div>
+                <div style="margin-bottom: 15px; margin-top: 15px;">
+                    ${itemsHtml}
+                </div>
+                <div class="receipt-total">
+                    <div class="receipt-total-row"><span>Total</span><span>₹${total}</span></div>
+                    <div class="receipt-total-row" style="font-size: 12px; margin-top: 5px; font-weight: normal;"><span>Payment</span><span>${paymentMethod}</span></div>
+                </div>
+                <p style="text-align: center; margin-top: 30px; font-size: 12px;">Thank you for your visit!</p>
+            `;
+            
+            window.print();
+        }
+
+        function updateCartUI() {
+            const container = document.getElementById('cart-items-container');
+            const totalDisplay = document.getElementById('cart-total-price');
+            const badgeDisplay = document.getElementById('cart-count-badge');
+            
+            container.innerHTML = ''; 
+            let totalPrice = 0;
+            let totalItems = 0;
+
+            if (Object.keys(cart).length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#94a3b8;">Your cart is empty.</p>';
+            } else {
+                for (let itemName in cart) {
+                    let item = cart[itemName];
+                    let itemTotal = item.price * item.quantity;
+                    totalPrice += itemTotal;
+                    totalItems += item.quantity;
+                    const safeName = itemName.replace(/'/g, "\\'"); 
+                    container.innerHTML += `
+                        <div class="cart-item">
+                            <div class="cart-item-details">
+                                <div class="cart-item-title">${itemName}</div>
+                                <div class="cart-item-price">₹${item.price} x ${item.quantity} = <strong>₹${itemTotal}</strong></div>
+                            </div>
+                            <div class="cart-item-actions">
+                                <button onclick="addToCart('${safeName}', ${item.price})">+</button>
+                                <button class="btn-remove" onclick="removeFromCart('${safeName}')">-</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            totalDisplay.innerText = totalPrice;
+            badgeDisplay.innerText = totalItems;
+        }
+
+        // --- 7. HISTORY LOGIC & PDF EXPORT ---
+        function renderHistoryTable() {
+            const tableBody = document.getElementById('history-table-body');
+            tableBody.innerHTML = ''; 
+            
+            // Filter to only show Current Month
+            const currentMonthYear = todayStr.substring(3);
+            const monthlyTransactions = transactionHistory.filter(tx => tx.date.includes(currentMonthYear));
+
+            if (monthlyTransactions.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">No transactions recorded this month yet.</td></tr>';
+                return;
+            }
+            monthlyTransactions.forEach(transaction => {
+                const badgeColor = transaction.paymentMethod === 'Online' ? '#3b82f6' : '#10b981';
+                tableBody.innerHTML += `
+                    <tr>
+                        <td><strong>${transaction.id}</strong></td>
+                        <td>${transaction.date}<br><span class="date-tag">${transaction.time}</span></td>
+                        <td>${transaction.itemsHTML}</td>
+                        <td><span class="cat-tag" style="background-color: ${badgeColor}; color: white;">${transaction.paymentMethod}</span></td>
+                        <td><strong>₹${transaction.total.toFixed(2)}</strong></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // NEW: Function to Export History to PDF using jsPDF
+        function exportHistoryPDF() {
+            const currentMonthYear = todayStr.substring(3);
+            const monthlyTransactions = transactionHistory.filter(tx => tx.date.includes(currentMonthYear));
+
+            if (monthlyTransactions.length === 0) {
+                alert("No transaction history available this month to export.");
+                return;
+            }
+
+            // Access the jsPDF library from the window object (loaded via CDN in the <head>)
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Set Title
+            doc.setFontSize(18);
+            doc.text(`Monthly Sales Report (${currentMonthYear})`, 14, 22);
+            doc.setFontSize(11);
+            doc.setTextColor(100);
+            
+            // Set Monthly Total
+            const monthTotal = monthlyTransactions.reduce((sum, tx) => sum + tx.total, 0);
+            doc.text(`Total Revenue: Rs ${monthTotal.toFixed(2)}`, 14, 30);
+
+            // Define Table Data
+            const tableColumn = ["Order ID", "Date", "Time", "Payment", "Total (Rs)", "Purchased Items"];
+            const tableRows = [];
+
+            monthlyTransactions.forEach(tx => {
+                // Strip HTML from items string for the PDF
+                let tempDiv = document.createElement("div");
+                tempDiv.innerHTML = tx.itemsHTML;
+                let cleanItemsText = tempDiv.innerText.replace(/\n/g, ", ");
+                
+                const txData = [
+                    tx.id,
+                    tx.date,
+                    tx.time,
+                    tx.paymentMethod,
+                    tx.total.toFixed(2),
+                    cleanItemsText
+                ];
+                tableRows.push(txData);
+            });
+
+            // Generate Table
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 40,
+                styles: { fontSize: 9 },
+                columnStyles: { 5: { cellWidth: 70 } } // Wrap the items text so it fits
+            });
+
+            // Trigger Download
+            const safeDate = getFormattedDate().replace(/\//g, "-");
+            doc.save(`Monthly_Sales_Report_${safeDate}.pdf`);
+        }
+
+        // --- 8. TABLE SYSTEM LOGIC ---
+        function calculateTableTotal(tableCart) {
+            let total = 0;
+            for(let key in tableCart) { total += tableCart[key].price * tableCart[key].quantity; }
+            return total;
+        }
+
+        function renderDiningTables() {
+            const container = document.getElementById('tables-grid-container');
+            container.innerHTML = '';
+            
+            diningTables.forEach(table => {
+                const statusText = table.status === 'available' ? 'Available' : 'Occupied';
+                const totalHtml = table.status === 'occupied' ? `<div class="table-amount">₹${calculateTableTotal(table.cart)}</div>` : '';
+                
+                container.innerHTML += `
+                    <div class="dining-table ${table.status}" onclick="handleTableClick(${table.id})">
+                        <span>Table ${table.id}</span>
+                        <span class="table-status-label">${statusText}</span>
+                        ${totalHtml}
+                    </div>
+                `;
+            });
+        }
+
+        function handleTableClick(tableId) {
+            const table = diningTables.find(t => t.id === tableId);
+            
+            if (table.status === 'available') {
+                if (confirm(`Open a new tab for Table ${tableId}?`)) {
+                    table.status = 'occupied';
+                    setActiveBillingContext(tableId);
+                    switchPage('home', document.getElementById('nav-billing')); 
                 }
             } else {
-                stock += item.quantity;
-                valuation += (item.quantity * item.price);
+                setActiveBillingContext(tableId);
+                switchPage('home', document.getElementById('nav-billing')); 
             }
-        });
+            renderDiningTables();
+        }
 
-        // FIXED BRAND COUNT: Counts only brands with balance > 0
-        let brandsAvailableCount = 0;
-        ALL_BRANDS.forEach(brand => {
-            if (getBalance(brand) > 0) {
-                brandsAvailableCount++;
-            }
-        });
-
-        document.getElementById('totalQty').innerText = stock;
-        document.getElementById('totalVal').innerText = '₹' + valuation.toLocaleString('en-IN');
-        document.getElementById('dailyExitQty').innerText = dailyQty;
-        document.getElementById('dailyRevenue').innerText = '₹' + dailyRev.toLocaleString('en-IN');
-        document.getElementById('uniqueCount').innerText = brandsAvailableCount;
-    }
-
-    function displayItems() {
-        const filter = document.getElementById('historyFilter').value;
-        const body = document.querySelector('#itemsTable tbody');
-        body.innerHTML = '';
-        const now = new Date();
-
-        inventory.forEach((item, index) => {
-            const itemDate = new Date(item.timestamp);
-            if (filter === 'month' && (itemDate.getMonth() !== now.getMonth() || itemDate.getFullYear() !== now.getFullYear())) return;
-
-            const isExit = item.type === 'EXIT';
-            const cdQ = item.cdQty || 0;
-            const chkQ = item.chkQty || 0;
-            const total = isExit ? ((item.quantity * (item.price + getProfitMargin(item.name))) + (cdQ * CD_PRICE) + (chkQ * CHK_PRICE)) : (item.quantity * item.price);
+        // --- 9. DASHBOARD LOGIC ---
+        function updateDashboard() {
+            let todaySale = 0;
+            let todayCash = 0;
+            let todayOnline = 0;
+            let todayOrders = 0;
             
-            body.insertAdjacentHTML('afterbegin', `<tr>
-                <td>${item.date}</td>
-                <td><span class="badge ${isExit ? 'badge-exit' : 'badge-entry'}">${item.type}</span></td>
-                <td><b>${item.name}</b></td>
-                <td style="color:${isExit?'red':'green'}"><b>${isExit?'-':'+'}${item.quantity}</b></td>
-                <td style="text-align:center;">${cdQ > 0 ? cdQ : '-'}</td>
-                <td style="text-align:center;">${chkQ > 0 ? chkQ : '-'}</td>
-                <td>₹${total.toLocaleString('en-IN')}</td>
-                <td>
-                    <button class="delete-btn" onclick="deleteItem(${index})">Delete</button>
-                    ${isExit ? `<button class="print-btn" onclick="printBill('${item.name}', ${item.quantity}, ${item.price}, ${cdQ}, ${chkQ})">Bill</button>` : ''}
-                </td>
-            </tr>`);
-        });
+            let monthlySale = 0;
+            let monthlyCash = 0;
+            let monthlyOnline = 0;
+            let monthlyOrders = 0;
+            
+            let monthlyPurchase = 0;
+            
+            const currentMonthYear = todayStr.substring(3); 
 
-        document.querySelector('#summaryTable tbody').innerHTML = ALL_BRANDS.map(b => `<tr><td>${b}</td><td><b>${getBalance(b)}</b></td></tr>`).join('');
-        localStorage.setItem('myInventoryData', JSON.stringify(inventory));
-        updateDashboard();
-    }
+            transactionHistory.forEach(tx => {
+                if (tx.date === todayStr) {
+                    todaySale += tx.total;
+                    todayOrders++;
+                    if (tx.paymentMethod === 'Cash') todayCash += tx.total;
+                    if (tx.paymentMethod === 'Online') todayOnline += tx.total;
+                }
+                if (tx.date.includes(currentMonthYear)) {
+                    monthlySale += tx.total;
+                    monthlyOrders++;
+                    if (tx.paymentMethod === 'Cash') monthlyCash += tx.total;
+                    if (tx.paymentMethod === 'Online') monthlyOnline += tx.total;
+                }
+            });
 
-    document.getElementById('addForm').onsubmit = function(e) {
-        e.preventDefault();
-        const type = document.getElementById('type').value;
-        const name = document.getElementById('name').value;
-        const price = parseFloat(document.getElementById('price').value);
-        const cdQty = parseInt(document.getElementById('coldDrinkQtyInput').value) || 0;
-        const chkQty = parseInt(document.getElementById('chakanaQtyInput').value) || 0;
-        let rawInput = document.getElementById('quantity').value.replace(/[^\d+]/g, '');
-        const liquorQty = rawInput.split('+').reduce((a, b) => a + (parseInt(b) || 0), 0);
-        if (liquorQty <= 0) return;
-        if (type === 'EXIT' && liquorQty > getBalance(name)) { alert("No Stock!"); return; }
+            inventoryData.forEach(item => {
+                if (item.date && item.date.includes(currentMonthYear)) {
+                    monthlyPurchase += (item.buyRate * item.quantity);
+                }
+            });
 
-        inventory.push({ 
-            date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-            timestamp: Date.now(), type, name, quantity: liquorQty, price, cdQty, chkQty 
-        });
+            document.getElementById('dash-today-sale').innerText = `₹${todaySale.toFixed(2)}`;
+            document.getElementById('dash-today-cash').innerText = `₹${todayCash.toFixed(2)}`;
+            document.getElementById('dash-today-online').innerText = `₹${todayOnline.toFixed(2)}`;
+            
+            document.getElementById('dash-monthly-sale').innerText = `₹${monthlySale.toFixed(2)}`;
+            document.getElementById('dash-monthly-cash').innerText = `₹${monthlyCash.toFixed(2)}`;
+            document.getElementById('dash-monthly-online').innerText = `₹${monthlyOnline.toFixed(2)}`;
+            
+            document.getElementById('dash-monthly-purchase').innerText = `₹${monthlyPurchase.toFixed(2)}`;
+            document.getElementById('dash-today-orders').innerText = todayOrders;
+            document.getElementById('dash-monthly-orders').innerText = monthlyOrders;
+        }
 
-        displayItems();
-        if (type === 'EXIT' && confirm("Print Bill?")) printBill(name, liquorQty, price, cdQty, chkQty);
-        document.getElementById('name').value = "";
-        document.getElementById('quantity').value = "";
-        document.getElementById('coldDrinkQtyInput').value = 0;
-        document.getElementById('chakanaQtyInput').value = 0;
-        document.getElementById('stockWarning').innerText = "";
-    };
+        // --- 10. CREDIT (KHATA) LOGIC ---
+        function renderCreditList() {
+            const container = document.getElementById('credit-list-container');
+            container.innerHTML = '';
+            
+            if (creditCustomers.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding: 15px 0; margin: 0;">No pending credits. All clear!</p>';
+                return;
+            }
 
-    window.deleteItem = (i) => { if(confirm("Delete?")) { inventory.splice(i, 1); displayItems(); } };
-    function clearAllData() { if(confirm("Clear All?")) { localStorage.clear(); inventory = []; displayItems(); } }
-    displayItems();
-</script>
+            creditCustomers.forEach((customer, index) => {
+                const borderStyle = index === creditCustomers.length - 1 ? 'border-bottom: none;' : '';
+                container.innerHTML += `
+                    <div class="credit-item" style="${borderStyle}">
+                        <span class="credit-name">${customer.name}</span>
+                        <div>
+                            <span class="credit-amount">₹${customer.amount.toFixed(2)}</span>
+                            <button class="btn-settle" onclick="settleCredit(${index})">Settle</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function addCreditCustomer() {
+            const name = document.getElementById('credit-name').value.trim();
+            const amount = parseFloat(document.getElementById('credit-amount').value);
+
+            if (!name || isNaN(amount) || amount <= 0) {
+                alert("Please enter a valid customer name and an amount greater than 0.");
+                return;
+            }
+
+            const existingCustomer = creditCustomers.find(c => c.name.toLowerCase() === name.toLowerCase());
+            
+            if (existingCustomer) {
+                existingCustomer.amount += amount;
+                alert(`Added ₹${amount} to ${existingCustomer.name}'s existing tab. Total is now ₹${existingCustomer.amount}`);
+            } else {
+                creditCustomers.push({ name, amount });
+            }
+            
+            document.getElementById('credit-name').value = '';
+            document.getElementById('credit-amount').value = '';
+            
+            renderCreditList();
+        }
+
+        function settleCredit(index) {
+            const customer = creditCustomers[index];
+            if (confirm(`Mark ${customer.name}'s credit of ₹${customer.amount} as settled/paid?`)) {
+                creditCustomers.splice(index, 1);
+                renderCreditList();
+            }
+        }
+
+        // --- 11. QR CODE UPLOAD LOGIC ---
+        function handleQRUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('qr-display').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
 </body>
 </html>
