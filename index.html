@@ -18,6 +18,40 @@
             color: #333; 
         }
 
+        /* === Login Screen CSS === */
+        #login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #0f172a;
+        }
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+        .login-box h2 { margin-top: 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px;}
+        .login-box p { color: #64748b; margin-bottom: 20px;}
+        .login-box input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .login-box input:focus { border-color: #3b82f6; }
+        .login-box button { width: 100%; padding: 12px; font-size: 1.1rem; }
+
         nav { 
             background-color: #0f172a; 
             padding: 1.5rem; 
@@ -255,230 +289,243 @@
 </head>
 <body onload="initializeStore()">
 
-    <nav>
-        <button class="nav-btn active" id="nav-billing" onclick="switchPage('home', this)">Billing Area</button>
-        <button class="nav-btn" onclick="switchPage('table-system', this)">Table System</button>
-        <button class="nav-btn" onclick="switchPage('inventory', this)">Inventory</button>
-        <button class="nav-btn" onclick="switchPage('history', this)">History</button>
-        <button class="nav-btn" id="nav-dashboard" onclick="switchPage('dashboard', this)">Dashboard 🔒</button>
-        <button class="nav-btn" onclick="switchPage('profile', this)">Profile</button>
-    </nav>
-
-    <div id="receipt-print-area" style="display: none;"></div>
-
-    <div id="home" class="page active-page">
-        <div class="billing-header">
-            <div class="context-controls">
-                <h1 id="billing-title" style="border:none; padding:0; margin:0;">Billing: Walk-in</h1>
-                <button id="btn-walkin" class="btn-switch-context" style="display:none;" onclick="setActiveBillingContext('walk-in')">Switch to Walk-in</button>
-            </div>
-            
-            <button class="cart-toggle-btn" onclick="toggleCart()">
-                🛒 View Cart (<span id="cart-count-badge">0</span>)
-            </button>
+    <div id="login-screen">
+        <div class="login-box">
+            <h2>SAIDEEP RESTO & BAR</h2>
+            <p>Authorized Personnel Only.</p>
+            <input type="text" id="login-username" placeholder="Enter Username" onkeydown="if(event.key === 'Enter'){ checkLogin(); }">
+            <button onclick="checkLogin()">Access System</button>
         </div>
-        <div id="category-bar" class="category-bar"></div>
-        <div class="items-grid" id="billing-items-grid"></div>
     </div>
 
-    <div id="cart-overlay" class="cart-overlay">
-        <div class="cart-popup">
-            <div class="cart-header">
-                <h2 id="cart-title-text">Your Cart (Walk-in)</h2>
-                <button class="close-btn" onclick="toggleCart()">Close</button>
-            </div>
-            <div id="cart-items-container" class="cart-items-container">
-                <p style="text-align:center; color:#94a3b8;">Your cart is empty.</p>
-            </div>
-            <div class="cart-footer">
-                <div class="cart-total-row">
-                    <h3>Total:</h3>
-                    <h3>₹<span id="cart-total-price">0</span></h3>
+    <div id="app-content" style="display: none;">
+        
+        <nav>
+            <button class="nav-btn active" id="nav-billing" onclick="switchPage('home', this)">Billing Area</button>
+            <button class="nav-btn" onclick="switchPage('table-system', this)">Table System</button>
+            <button class="nav-btn" onclick="switchPage('inventory', this)">Inventory</button>
+            <button class="nav-btn" onclick="switchPage('history', this)">History</button>
+            <button class="nav-btn" id="nav-dashboard" onclick="switchPage('dashboard', this)">Dashboard 🔒</button>
+            <button class="nav-btn" onclick="switchPage('profile', this)">Profile</button>
+            <button class="nav-btn" style="background-color: #ef4444;" onclick="logout()">Logout</button>
+        </nav>
+
+        <div id="receipt-print-area" style="display: none;"></div>
+
+        <div id="home" class="page active-page">
+            <div class="billing-header">
+                <div class="context-controls">
+                    <h1 id="billing-title" style="border:none; padding:0; margin:0;">Billing: Walk-in</h1>
+                    <button id="btn-walkin" class="btn-switch-context" style="display:none;" onclick="setActiveBillingContext('walk-in')">Switch to Walk-in</button>
                 </div>
                 
-                <p style="margin: 0; font-size: 0.85rem; color: #64748b; font-weight: bold;">Select Payment Method:</p>
-                <div class="payment-methods">
-                    <button id="btn-cash" class="pay-btn active-cash" onclick="setPaymentMethod('Cash')">💵 Cash</button>
-                    <button id="btn-online" class="pay-btn" onclick="setPaymentMethod('Online')">💳 Online</button>
-                </div>
-
-                <button class="checkout-btn" onclick="processCheckout()">Bill Out / Checkout</button>
+                <button class="cart-toggle-btn" onclick="toggleCart()">
+                    🛒 View Cart (<span id="cart-count-badge">0</span>)
+                </button>
             </div>
-        </div>
-    </div>
-
-    <div id="table-system" class="page">
-        <h1>Table Management</h1>
-        <p style="color: #64748b;">Click an available table to open a tab. Click an occupied table to continue billing.</p>
-        <div class="tables-grid" id="tables-grid-container"></div>
-    </div>
-
-    <div id="inventory" class="page">
-        <h1>Stock In Entry</h1>
-        <div class="inventory-form">
-            <div class="form-group full-width">
-                <label>Item Photo (Optional)</label>
-                <input type="file" id="inv-img" accept="image/*">
-            </div>
-            <div class="form-group">
-                <label>Category</label>
-                <select id="inv-category">
-                    <option value="Whiskey">Whiskey</option>
-                    <option value="Vodka">Vodka</option>
-                    <option value="Rum">Rum</option>
-                    <option value="Gin">Gin</option>
-                    <option value="Brandy">Brandy</option>
-                    <option value="Beer">Beer</option>
-                    <option value="Desi50ml">Desi50ml</option>
-                    <option value="Desi180ml">Desi180ml</option>
-                    <option value="Wine">Wine</option>
-                    <option value="Premium">Premium</option>
-                    <option value="Tequila">Tequila</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Item Name</label>
-                <input type="text" id="inv-name" placeholder="e.g., Old Monk">
-            </div>
-            <div class="form-group">
-                <label>Quantity</label>
-                <input type="number" id="inv-qty" placeholder="0" min="1">
-            </div>
-            <div class="form-group">
-                <label>Buying Rate (₹)</label>
-                <input type="number" id="inv-buy" placeholder="0.00" min="0">
-            </div>
-            <div class="form-group full-width">
-                <label>Billing Rate / Selling Price (₹)</label>
-                <input type="number" id="inv-sell" placeholder="0.00" min="0">
-            </div>
-            <button class="add-stock-btn" onclick="addStockItem()">Add to Stock</button>
+            <div id="category-bar" class="category-bar"></div>
+            <div class="items-grid" id="billing-items-grid"></div>
         </div>
 
-        <h3>Current Stock Ledger</h3>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Photo</th>
-                    <th>Category</th>
-                    <th>Item Name</th>
-                    <th>Qty</th>
-                    <th>Buy (₹)</th>
-                    <th>Bill (₹)</th>
-                    <th>Date Added</th>
-                    <th>Action</th> 
-                </tr>
-            </thead>
-            <tbody id="stock-table-body"></tbody>
-        </table>
-    </div>
-
-    <div id="history" class="page">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; margin-bottom: 15px; padding-bottom: 10px;">
-            <h1 style="border: none; padding: 0; margin: 0;">Monthly Transaction History</h1>
-            <button style="background-color: #ef4444;" onclick="exportHistoryPDF()">📄 Export to PDF</button>
-        </div>
-        <p style="color: #64748b;">A log of all billed checkouts for the current month.</p>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Order ID</th>
-                    <th>Date & Time</th>
-                    <th>Billed Items</th>
-                    <th>Payment Method</th>
-                    <th>Total Amount</th>
-                </tr>
-            </thead>
-            <tbody id="history-table-body"></tbody>
-        </table>
-    </div>
-
-    <div id="dashboard" class="page">
-        <h1>Business Dashboard</h1>
-        <p style="color: #64748b;">Live performance statistics based on current month and today's activity.</p>
-        
-        <div class="dash-grid">
-            <div class="dash-card">
-                <h3>Today's Sale</h3>
-                <div class="stat" id="dash-today-sale">₹0</div>
-                <div class="split-stats">
-                    <span class="cash-stat">💵 <span id="dash-today-cash">₹0</span></span>
-                    <span class="online-stat">💳 <span id="dash-today-online">₹0</span></span>
+        <div id="cart-overlay" class="cart-overlay">
+            <div class="cart-popup">
+                <div class="cart-header">
+                    <h2 id="cart-title-text">Your Cart (Walk-in)</h2>
+                    <button class="close-btn" onclick="toggleCart()">Close</button>
                 </div>
-            </div>
-            <div class="dash-card">
-                <h3>Monthly Sale</h3>
-                <div class="stat" id="dash-monthly-sale">₹0</div>
-                <div class="split-stats">
-                    <span class="cash-stat">💵 <span id="dash-monthly-cash">₹0</span></span>
-                    <span class="online-stat">💳 <span id="dash-monthly-online">₹0</span></span>
+                <div id="cart-items-container" class="cart-items-container">
+                    <p style="text-align:center; color:#94a3b8;">Your cart is empty.</p>
                 </div>
-            </div>
-            <div class="dash-card">
-                <h3>Monthly Purchase</h3>
-                <div class="stat" id="dash-monthly-purchase">₹0</div>
-            </div>
-            <div class="dash-card">
-                <h3>Today's Orders</h3>
-                <div class="stat" id="dash-today-orders">0</div>
-            </div>
-            <div class="dash-card">
-                <h3>Monthly Orders</h3>
-                <div class="stat" id="dash-monthly-orders">0</div>
+                <div class="cart-footer">
+                    <div class="cart-total-row">
+                        <h3>Total:</h3>
+                        <h3>₹<span id="cart-total-price">0</span></h3>
+                    </div>
+                    
+                    <p style="margin: 0; font-size: 0.85rem; color: #64748b; font-weight: bold;">Select Payment Method:</p>
+                    <div class="payment-methods">
+                        <button id="btn-cash" class="pay-btn active-cash" onclick="setPaymentMethod('Cash')">💵 Cash</button>
+                        <button id="btn-online" class="pay-btn" onclick="setPaymentMethod('Online')">💳 Online</button>
+                    </div>
+
+                    <button class="checkout-btn" onclick="processCheckout()">Bill Out / Checkout</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div id="profile" class="page">
-        <h1>Business Profile & Khata</h1>
-        <div class="profile-container">
-            <div class="profile-header">
-                <div class="profile-avatar">RS</div>
-                <div>
-                    <h2 style="margin: 0; color: #0f172a;">Rudra Shinde</h2>
-                    <p style="margin: 5px 0 0 0; color: #64748b;">System Administrator</p>
+        <div id="table-system" class="page">
+            <h1>Table Management</h1>
+            <p style="color: #64748b;">Click an available table to open a tab. Click an occupied table to continue billing.</p>
+            <div class="tables-grid" id="tables-grid-container"></div>
+        </div>
+
+        <div id="inventory" class="page">
+            <h1>Stock In Entry</h1>
+            <div class="inventory-form">
+                <div class="form-group full-width">
+                    <label>Item Photo (Optional)</label>
+                    <input type="file" id="inv-img" accept="image/*">
                 </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="inv-category">
+                        <option value="Whiskey">Whiskey</option>
+                        <option value="Vodka">Vodka</option>
+                        <option value="Rum">Rum</option>
+                        <option value="Gin">Gin</option>
+                        <option value="Brandy">Brandy</option>
+                        <option value="Beer">Beer</option>
+                        <option value="Desi50ml">Desi50ml</option>
+                        <option value="Desi180ml">Desi180ml</option>
+                        <option value="Wine">Wine</option>
+                        <option value="Premium">Premium</option>
+                        <option value="Tequila">Tequila</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Item Name</label>
+                    <input type="text" id="inv-name" placeholder="e.g., Old Monk">
+                </div>
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" id="inv-qty" placeholder="0" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Buying Rate (₹)</label>
+                    <input type="number" id="inv-buy" placeholder="0.00" min="0">
+                </div>
+                <div class="form-group full-width">
+                    <label>Billing Rate / Selling Price (₹)</label>
+                    <input type="number" id="inv-sell" placeholder="0.00" min="0">
+                </div>
+                <button class="add-stock-btn" onclick="addStockItem()">Add to Stock</button>
             </div>
 
-            <div class="profile-section">
-                <h3>Restaurant Details</h3>
-                <div class="profile-info-grid">
-                    <div><strong>Restaurant Name:</strong> SAIDEEP RESTO & BAR </div>
-                    <div><strong>Type:</strong> Fine Dining & Bar</div>
-                    <div><strong>Tagline:</strong> <em>"piyo aur pine do."</em></div>
+            <h3>Current Stock Ledger</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Photo</th>
+                        <th>Category</th>
+                        <th>Item Name</th>
+                        <th>Total Qty In</th>
+                        <th>Buy (₹)</th>
+                        <th>Bill (₹)</th>
+                        <th>Date Added</th>
+                        <th>Action</th> 
+                    </tr>
+                </thead>
+                <tbody id="stock-table-body"></tbody>
+            </table>
+        </div>
+
+        <div id="history" class="page">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; margin-bottom: 15px; padding-bottom: 10px;">
+                <h1 style="border: none; padding: 0; margin: 0;">Monthly Transaction History</h1>
+                <button style="background-color: #ef4444;" onclick="exportHistoryPDF()">📄 Export to PDF</button>
+            </div>
+            <p style="color: #64748b;">A log of all billed checkouts for the current month.</p>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date & Time</th>
+                        <th>Billed Items</th>
+                        <th>Payment Method</th>
+                        <th>Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body"></tbody>
+            </table>
+        </div>
+
+        <div id="dashboard" class="page">
+            <h1>Business Dashboard</h1>
+            <p style="color: #64748b;">Live performance statistics based on current month and today's activity.</p>
+            
+            <div class="dash-grid">
+                <div class="dash-card">
+                    <h3>Today's Sale</h3>
+                    <div class="stat" id="dash-today-sale">₹0</div>
+                    <div class="split-stats">
+                        <span class="cash-stat">💵 <span id="dash-today-cash">₹0</span></span>
+                        <span class="online-stat">💳 <span id="dash-today-online">₹0</span></span>
+                    </div>
+                </div>
+                <div class="dash-card">
+                    <h3>Monthly Sale</h3>
+                    <div class="stat" id="dash-monthly-sale">₹0</div>
+                    <div class="split-stats">
+                        <span class="cash-stat">💵 <span id="dash-monthly-cash">₹0</span></span>
+                        <span class="online-stat">💳 <span id="dash-monthly-online">₹0</span></span>
+                    </div>
+                </div>
+                <div class="dash-card">
+                    <h3>Monthly Purchase</h3>
+                    <div class="stat" id="dash-monthly-purchase">₹0</div>
+                </div>
+                <div class="dash-card">
+                    <h3>Today's Orders</h3>
+                    <div class="stat" id="dash-today-orders">0</div>
+                </div>
+                <div class="dash-card">
+                    <h3>Monthly Orders</h3>
+                    <div class="stat" id="dash-monthly-orders">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="profile" class="page">
+            <h1>Business Profile & Khata</h1>
+            <div class="profile-container">
+                <div class="profile-header">
+                    <div class="profile-avatar">RS</div>
                     <div>
-                        <strong>Contact Numbers:</strong><br>
-                        <span class="contact-pill">📞 +91 98765 43210</span>
-                        <span class="contact-pill">📞 +91 87654 32109</span>
-                        <span class="contact-pill">📞 +91 76543 21098</span>
+                        <h2 style="margin: 0; color: #0f172a;">Rudra Shinde</h2>
+                        <p style="margin: 5px 0 0 0; color: #64748b;">System Administrator</p>
                     </div>
                 </div>
-            </div>
 
-            <div class="profile-section" style="padding-top: 15px; border-top: 1px solid #e2e8f0;">
-                <h3>Receive Online Payments</h3>
-                <div style="text-align: center; padding: 30px 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-                    <input type="file" id="qr-upload" accept="image/*" style="display: none;" onchange="handleQRUpload(event)">
-                    
-                    <label for="qr-upload" style="cursor: pointer; display: inline-block;">
-                        <p style="margin: 0 0 15px 0; font-weight: bold; color: #0f172a; font-size: 1.3rem; letter-spacing: 0.5px;">Scan to Pay</p>
-                        <img id="qr-display" class="qr-image-wrapper" src="https://via.placeholder.com/250x250/e2e8f0/64748b?text=Click+to+Upload+QR" alt="Upload UPI QR Code" style="border-radius: 12px; border: 4px solid white; box-shadow: 0 8px 16px rgba(0,0,0,0.15); width: 250px; height: 250px; object-fit: contain; background: white; transition: transform 0.2s ease;">
-                    </label>
-                    
-                    <div style="margin-top: 25px;">
-                        <button type="button" style="background: #3b82f6; padding: 10px 20px; font-size: 1rem;" onclick="document.getElementById('qr-upload').click()">Upload / Change QR Code</button>
+                <div class="profile-section">
+                    <h3>Restaurant Details</h3>
+                    <div class="profile-info-grid">
+                        <div><strong>Restaurant Name:</strong> SAIDEEP RESTO & BAR </div>
+                        <div><strong>Type:</strong> Fine Dining & Bar</div>
+                        <div><strong>Tagline:</strong> <em>"piyo aur pine do."</em></div>
+                        <div>
+                            <strong>Contact Numbers:</strong><br>
+                            <span class="contact-pill">📞 +91 98765 43210</span>
+                            <span class="contact-pill">📞 +91 87654 32109</span>
+                            <span class="contact-pill">📞 +91 76543 21098</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="profile-section" style="padding-top: 15px; border-top: 1px solid #e2e8f0;">
-                <h3>Credit Customers (Udhaari)</h3>
-                <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
-                    <input type="text" id="credit-name" placeholder="Customer Name" style="flex: 2; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 1rem;">
-                    <input type="number" id="credit-amount" placeholder="Amount (₹)" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 1rem;">
-                    <button onclick="addCreditCustomer()" style="margin: 0; background: #0f172a;">Add</button>
+                <div class="profile-section" style="padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                    <h3>Receive Online Payments</h3>
+                    <div style="text-align: center; padding: 30px 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <input type="file" id="qr-upload" accept="image/*" style="display: none;" onchange="handleQRUpload(event)">
+                        
+                        <label for="qr-upload" style="cursor: pointer; display: inline-block;">
+                            <p style="margin: 0 0 15px 0; font-weight: bold; color: #0f172a; font-size: 1.3rem; letter-spacing: 0.5px;">Scan to Pay</p>
+                            <img id="qr-display" class="qr-image-wrapper" src="https://via.placeholder.com/250x250/e2e8f0/64748b?text=Click+to+Upload+QR" alt="Upload UPI QR Code" style="border-radius: 12px; border: 4px solid white; box-shadow: 0 8px 16px rgba(0,0,0,0.15); width: 250px; height: 250px; object-fit: contain; background: white; transition: transform 0.2s ease;">
+                        </label>
+                        
+                        <div style="margin-top: 25px;">
+                            <button type="button" style="background: #3b82f6; padding: 10px 20px; font-size: 1rem;" onclick="document.getElementById('qr-upload').click()">Upload / Change QR Code</button>
+                        </div>
+                    </div>
                 </div>
-                <div id="credit-list-container" style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0 15px;"></div>
+
+                <div class="profile-section" style="padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                    <h3>Credit Customers (Udhaari)</h3>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <input type="text" id="credit-name" placeholder="Customer Name" style="flex: 2; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 1rem;">
+                        <input type="number" id="credit-amount" placeholder="Amount (₹)" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 1rem;">
+                        <button onclick="addCreditCustomer()" style="margin: 0; background: #0f172a;">Add</button>
+                    </div>
+                    <div id="credit-list-container" style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0 15px;"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -493,30 +540,83 @@
         }
         
         const todayStr = getFormattedDate(); 
+
+        // LOAD DATA FROM LOCAL STORAGE (or set defaults if empty)
+        let inventoryData = JSON.parse(localStorage.getItem('inventoryData')) || [];
         
-        // EMPTIED: Fresh start for production
-        let inventoryData = [];
-        
-        let walkInCart = {}; 
-        let cart = walkInCart; 
-        let activeBillingContext = 'walk-in'; 
-        
-        let activeCategoryFilter = 'All';
-        let selectedPaymentMethod = 'Cash'; 
-        let transactionHistory = [];
-        let currentOrderCounter = 1;
-        
-        let diningTables = Array.from({length: 10}, (_, i) => ({ 
+        // MIGRATION: Ensure existing data has a "remainingQty" field if loading from an older save
+        inventoryData.forEach(item => {
+            if (typeof item.remainingQty === 'undefined') {
+                item.remainingQty = item.quantity;
+            }
+        });
+
+        let walkInCart = JSON.parse(localStorage.getItem('walkInCart')) || {}; 
+        let transactionHistory = JSON.parse(localStorage.getItem('transactionHistory')) || [];
+        let currentOrderCounter = parseInt(localStorage.getItem('currentOrderCounter')) || 1;
+        let diningTables = JSON.parse(localStorage.getItem('diningTables')) || Array.from({length: 10}, (_, i) => ({ 
             id: i + 1, 
             status: 'available',
             cart: {} 
         }));
-
-        let creditCustomers = [];
+        let creditCustomers = JSON.parse(localStorage.getItem('creditCustomers')) || [];
+        
+        // UI State Variables (No need to persist these across reloads)
+        let activeBillingContext = 'walk-in'; 
+        let cart = walkInCart; 
+        let activeCategoryFilter = 'All';
+        let selectedPaymentMethod = 'Cash'; 
         let lastDashboardAccessTime = 0; 
         const DASHBOARD_TIMEOUT = 10 * 60 * 1000; 
 
+        // --- NEW: LOGIN LOGIC ---
+        function checkLogin() {
+            const usernameInput = document.getElementById('login-username').value.trim();
+            if (usernameInput === 'saideep@') {
+                sessionStorage.setItem('isLoggedIn', 'true'); // Save login session
+                document.getElementById('login-screen').style.display = 'none'; // Hide login
+                document.getElementById('app-content').style.display = 'block'; // Show app
+                document.getElementById('login-username').value = ''; // Clear input for next time
+            } else {
+                alert('Invalid Username. Access Denied.');
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('isLoggedIn'); // Clear session
+            document.getElementById('app-content').style.display = 'none'; // Hide app
+            document.getElementById('login-screen').style.display = 'flex'; // Show login
+            // Reset page back to home for next login
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('home').classList.add('active-page');
+            document.getElementById('nav-billing').classList.add('active');
+        }
+
+
+        // --- MASTER SAVE FUNCTION ---
+        function saveData() {
+            localStorage.setItem('inventoryData', JSON.stringify(inventoryData));
+            localStorage.setItem('walkInCart', JSON.stringify(walkInCart));
+            localStorage.setItem('transactionHistory', JSON.stringify(transactionHistory));
+            localStorage.setItem('currentOrderCounter', currentOrderCounter.toString());
+            localStorage.setItem('diningTables', JSON.stringify(diningTables));
+            localStorage.setItem('creditCustomers', JSON.stringify(creditCustomers));
+        }
+
         function initializeStore() {
+            // Check Login Status on Page Load
+            if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-content').style.display = 'block';
+            }
+
+            // Restore QR Code if saved
+            const savedQR = localStorage.getItem('qrCodeImage');
+            if (savedQR) {
+                document.getElementById('qr-display').src = savedQR;
+            }
+
             sortInventory(); 
             syncCategories(); 
             renderInventoryTable();
@@ -525,6 +625,7 @@
             renderDiningTables(); 
             updateDashboard();
             renderCreditList(); 
+            updateCartUI(); // Ensure cart UI matches loaded data
         }
 
         // --- 2. PAGE SWITCHING & AUTHENTICATION ---
@@ -587,11 +688,12 @@
             
             filteredData.forEach(item => {
                 const safeName = item.name.replace(/'/g, "\\'"); 
-                const isOutOfStock = item.quantity <= 0;
+                // We use remainingQty to see if it's really out of stock for billing
+                const isOutOfStock = item.remainingQty <= 0;
                 
                 const stockBadgeHTML = isOutOfStock 
                     ? `<span class="out-of-stock-badge">Out of Stock</span>` 
-                    : `<span class="stock-badge">Stock: ${item.quantity}</span>`;
+                    : `<span class="stock-badge">Stock: ${item.remainingQty}</span>`;
                 
                 const cardClass = isOutOfStock ? 'item-card out-of-stock' : 'item-card';
                 
@@ -637,23 +739,25 @@
                 reader.onload = function(e) {
                     finalImgUrl = e.target.result; 
                     if(existingItem) {
-                        existingItem.quantity += qty;
+                        existingItem.quantity += qty; // Total entered history
+                        existingItem.remainingQty += qty; // What's actually available
                         existingItem.buyRate = buyRate;
                         existingItem.sellRate = sellRate;
                         existingItem.imgUrl = finalImgUrl;
                     } else {
-                        inventoryData.push({ category: category, name: name, quantity: qty, buyRate: buyRate, sellRate: sellRate, date: currentDate, imgUrl: finalImgUrl });
+                        inventoryData.push({ category: category, name: name, quantity: qty, remainingQty: qty, buyRate: buyRate, sellRate: sellRate, date: currentDate, imgUrl: finalImgUrl });
                     }
                     finishAddingStock();
                 }
                 reader.readAsDataURL(fileInput.files[0]);
             } else {
                 if(existingItem) {
-                    existingItem.quantity += qty;
+                    existingItem.quantity += qty; // Total entered history
+                    existingItem.remainingQty += qty; // What's actually available
                     existingItem.buyRate = buyRate;
                     existingItem.sellRate = sellRate;
                 } else {
-                    inventoryData.push({ category: category, name: name, quantity: qty, buyRate: buyRate, sellRate: sellRate, date: currentDate, imgUrl: finalImgUrl });
+                    inventoryData.push({ category: category, name: name, quantity: qty, remainingQty: qty, buyRate: buyRate, sellRate: sellRate, date: currentDate, imgUrl: finalImgUrl });
                 }
                 finishAddingStock();
             }
@@ -662,6 +766,7 @@
         function removeStockItem(index) {
             if (confirm("Are you sure you want to remove this item from the inventory?")) {
                 inventoryData.splice(index, 1);
+                saveData(); // Save changes
                 syncCategories(); 
                 renderInventoryTable();
                 renderBillingItems(); 
@@ -683,6 +788,7 @@
         function finishAddingStock() {
             clearInventoryForm();
             sortInventory();        
+            saveData(); // Save changes
             syncCategories(); 
             renderInventoryTable(); 
             renderBillingItems();
@@ -698,12 +804,13 @@
                 return;
             }
             inventoryData.forEach((item, index) => {
+                // Here we display "item.quantity" because you want this to be the total ledger that doesn't go down
                 tableBody.innerHTML += `
                     <tr>
                         <td><img src="${item.imgUrl}" class="table-img" alt="img"></td>
                         <td><span class="cat-tag">${item.category}</span></td>
                         <td><strong>${item.name}</strong></td>
-                        <td>${item.quantity}</td>
+                        <td>${item.quantity}</td> 
                         <td>₹${item.buyRate.toFixed(2)}</td>
                         <td>₹${item.sellRate.toFixed(2)}</td>
                         <td class="date-tag">${item.date}</td>
@@ -742,13 +849,16 @@
             const invItem = inventoryData.find(i => i.name === itemName);
             const currentQtyInCart = cart[itemName] ? cart[itemName].quantity : 0;
             
-            if (currentQtyInCart >= invItem.quantity) {
-                alert(`Cannot add more. Only ${invItem.quantity} left in stock.`);
+            // Check against remainingQty for billing realism
+            if (currentQtyInCart >= invItem.remainingQty) {
+                alert(`Cannot add more. Only ${invItem.remainingQty} left in stock.`);
                 return;
             }
 
             if (cart[itemName]) { cart[itemName].quantity += 1; } 
             else { cart[itemName] = { price: itemPrice, quantity: 1 }; }
+            
+            saveData(); // Save changes
             updateCartUI();
         }
 
@@ -757,6 +867,7 @@
                 cart[itemName].quantity -= 1;
                 if (cart[itemName].quantity <= 0) { delete cart[itemName]; }
             }
+            saveData(); // Save changes
             updateCartUI();
         }
 
@@ -779,7 +890,6 @@
             
             let finalTotal = 0;
             let purchasedItemsList = []; 
-            // We save a copy of the cart to pass to the print function before we wipe it out
             let cartSnapshot = JSON.parse(JSON.stringify(cart)); 
             
             for (let itemName in cart) { 
@@ -789,8 +899,9 @@
                 
                 let invItem = inventoryData.find(i => i.name === itemName);
                 if (invItem) {
-                    invItem.quantity -= item.quantity;
-                    if (invItem.quantity < 0) invItem.quantity = 0; 
+                    // DEDUCT from realistic remaining stock, leaving total inventory quantity alone
+                    invItem.remainingQty -= item.quantity;
+                    if (invItem.remainingQty < 0) invItem.remainingQty = 0; 
                 }
             }
             
@@ -813,20 +924,8 @@
                 paymentMethod: selectedPaymentMethod
             });
 
-            renderHistoryTable();
-            updateDashboard(); 
-            renderInventoryTable();
-            renderBillingItems(); 
-
-            const printConfirmed = confirm(`Success! Bill generated.\nOrder ID: ${orderId}\nTotal: ₹${finalTotal}\nPaid via: ${selectedPaymentMethod}\n\nWould you like to print the receipt?`);
-            
-            if(printConfirmed) {
-                printReceipt(orderId, dateStr, timeStr, cartSnapshot, finalTotal, selectedPaymentMethod);
-            }
-            
             if (activeBillingContext === 'walk-in') {
-                walkInCart = {}; 
-                cart = walkInCart; 
+                for (let prop in walkInCart) { delete walkInCart[prop]; }
             } else {
                 const table = diningTables.find(t => t.id === activeBillingContext);
                 table.status = 'available';
@@ -835,9 +934,21 @@
                 setActiveBillingContext('walk-in'); 
             }
 
+            saveData(); // Save changes before updating UI
+
+            renderHistoryTable();
+            updateDashboard(); 
+            renderInventoryTable();
+            renderBillingItems(); 
             updateCartUI();
             setPaymentMethod('Cash'); 
             toggleCart();
+
+            const printConfirmed = confirm(`Success! Bill generated.\nOrder ID: ${orderId}\nTotal: ₹${finalTotal}\nPaid via: ${selectedPaymentMethod}\n\nWould you like to print the receipt?`);
+            
+            if(printConfirmed) {
+                printReceipt(orderId, dateStr, timeStr, cartSnapshot, finalTotal, selectedPaymentMethod);
+            }
         }
 
         function printReceipt(orderId, dateStr, timeStr, cartData, total, paymentMethod) {
@@ -915,7 +1026,6 @@
             const tableBody = document.getElementById('history-table-body');
             tableBody.innerHTML = ''; 
             
-            // Filter to only show Current Month
             const currentMonthYear = todayStr.substring(3);
             const monthlyTransactions = transactionHistory.filter(tx => tx.date.includes(currentMonthYear));
 
@@ -937,7 +1047,6 @@
             });
         }
 
-        // NEW: Function to Export History to PDF using jsPDF
         function exportHistoryPDF() {
             const currentMonthYear = todayStr.substring(3);
             const monthlyTransactions = transactionHistory.filter(tx => tx.date.includes(currentMonthYear));
@@ -947,26 +1056,21 @@
                 return;
             }
 
-            // Access the jsPDF library from the window object (loaded via CDN in the <head>)
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
-            // Set Title
             doc.setFontSize(18);
             doc.text(`Monthly Sales Report (${currentMonthYear})`, 14, 22);
             doc.setFontSize(11);
             doc.setTextColor(100);
             
-            // Set Monthly Total
             const monthTotal = monthlyTransactions.reduce((sum, tx) => sum + tx.total, 0);
             doc.text(`Total Revenue: Rs ${monthTotal.toFixed(2)}`, 14, 30);
 
-            // Define Table Data
             const tableColumn = ["Order ID", "Date", "Time", "Payment", "Total (Rs)", "Purchased Items"];
             const tableRows = [];
 
             monthlyTransactions.forEach(tx => {
-                // Strip HTML from items string for the PDF
                 let tempDiv = document.createElement("div");
                 tempDiv.innerHTML = tx.itemsHTML;
                 let cleanItemsText = tempDiv.innerText.replace(/\n/g, ", ");
@@ -982,16 +1086,14 @@
                 tableRows.push(txData);
             });
 
-            // Generate Table
             doc.autoTable({
                 head: [tableColumn],
                 body: tableRows,
                 startY: 40,
                 styles: { fontSize: 9 },
-                columnStyles: { 5: { cellWidth: 70 } } // Wrap the items text so it fits
+                columnStyles: { 5: { cellWidth: 70 } } 
             });
 
-            // Trigger Download
             const safeDate = getFormattedDate().replace(/\//g, "-");
             doc.save(`Monthly_Sales_Report_${safeDate}.pdf`);
         }
@@ -1027,6 +1129,7 @@
             if (table.status === 'available') {
                 if (confirm(`Open a new tab for Table ${tableId}?`)) {
                     table.status = 'occupied';
+                    saveData(); // Save newly occupied table
                     setActiveBillingContext(tableId);
                     switchPage('home', document.getElementById('nav-billing')); 
                 }
@@ -1132,6 +1235,7 @@
             document.getElementById('credit-name').value = '';
             document.getElementById('credit-amount').value = '';
             
+            saveData(); // Save changes
             renderCreditList();
         }
 
@@ -1139,6 +1243,7 @@
             const customer = creditCustomers[index];
             if (confirm(`Mark ${customer.name}'s credit of ₹${customer.amount} as settled/paid?`)) {
                 creditCustomers.splice(index, 1);
+                saveData(); // Save changes
                 renderCreditList();
             }
         }
@@ -1149,7 +1254,9 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    document.getElementById('qr-display').src = e.target.result;
+                    const imgData = e.target.result;
+                    document.getElementById('qr-display').src = imgData;
+                    localStorage.setItem('qrCodeImage', imgData); // Save QR to local storage
                 }
                 reader.readAsDataURL(file);
             }
